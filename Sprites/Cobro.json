@@ -1,0 +1,43 @@
+{
+  "name": "Cobro",
+  "characterPreset": "Cobro",
+  "parameters": {
+    "BetterAnimation": true,
+    "SpecialIcons": "special.png",
+    "Avatar": "avatar.png",
+    "GunSpriteOffset":
+    {
+      "x": 0,
+      "y": 0
+    }
+  },
+  "cutscene": {
+    "heading": "Cobro",
+    "subtitle1": "  Joins The Battle!",
+    "headingScale": 0.21,
+    "spriteRect":
+    {
+     "x": -52,
+     "y": 272,
+     "width": 278,
+     "height": 278
+    },
+    "spritePath": "cutscene.png",
+    "anim": "Intro_Bro_Bronan",
+    "playCutsceneOnFirstSpawn": true
+  },
+  "beforeAwake": {
+    "speed": 130,
+    "fireRate": 0.08,
+    "canChimneyFlip": true,
+    "originalSpecialAmmo": 6
+  },
+  "afterAwake": {},
+  "beforeStart": {
+    "sprite": "sprite.png",
+    "gunSprite": "gunSprite.png"  
+  },
+  "afterStart": {
+    
+  }
+}
