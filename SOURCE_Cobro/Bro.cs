@@ -4,6 +4,7 @@ using System.IO;
 using System.Reflection;
 using UnityEngine;
 using System;
+using System.Collections;
 
 namespace Cobro
 {
@@ -20,19 +21,26 @@ namespace Cobro
         public static AudioClip[] CobroGunSounds;
         public static AudioClip[] MachineGunSounds;
         private AudioClip emptyGunSound;
+        private int specialAmmo = 6;
 
         private bool wasInvulnerable = false;
         private bool specialActive = false;
         private bool isUsingSpecial = false;
         private bool firstSpecialPress = true;
         private int usingSpecialFrame = 0;
+        private bool specialMode = false;
+        private new bool usingSpecial = false; // Track if special mode is active
+        private const float frameDuration = 0.0334f; // Duration of one frame
+        private const int specialAnimationFrames = 9; // Number of frames in the animation
+        private float animationDuration = specialAnimationFrames * frameDuration; // Calculate animation duration
 
         private bool specialModeDeactivated = false;
         private bool isReversingSpecial = false;
+        private bool FirstPressSpecial = true;
 
-        private bool isAnimatingSpecial = false;  
+        private bool isAnimatingSpecial = false; // New flag to track animation state
 
-
+        public Shrapnel bulletShell;
 
         protected override void Awake()
         {
@@ -73,32 +81,47 @@ namespace Cobro
                 Cobro.CobroGunSounds[4] = ResourcesController.GetAudioClip(Path.Combine(directoryName, "sounds"), "CobroGun_7.wav");
 
             }
-            this.emptyGunSound = ResourcesController.GetAudioClip(Path.Combine(directoryName, "sounds"), "EmptyGun.wav"); 
+            this.emptyGunSound = ResourcesController.GetAudioClip(Path.Combine(directoryName, "sounds"), "EmptyGun.wav"); // Initialize empty gun sound
         }
 
         protected override void Update()
         {
+            if (Input.GetButtonDown("Special")) // Replace with your actual input check
+            {
+                if (!usingSpecial && !isAnimatingSpecial)
+                {
+                    this.isAnimatingSpecial = true; // Start special animation
+                }
+                else if (usingSpecial)
+                {
+                    SetupSpecialAttack();
+                    FireSpecialWeapon();
+                }
+            }
+
+            // Call AnimateSpecial to keep updating the animation frame
+            if (isAnimatingSpecial)
+            {
+                AnimateSpecial();
+            }
+
+            // Deactivation logic
+            if (specialAmmo <= 0)
+            {
+                usingSpecial = false;
+            }
+
             if (this.invulnerable)
             {
                 this.wasInvulnerable = true;
             }
             base.Update();
 
-            if (this.usingSpecial && !this.specialActive && CanUseSpecial())
-            {
-                AnimateSpecial();
-            }
-
             if (this.wasInvulnerable && !this.invulnerable)
             {
                 normalMaterial.SetColor("_TintColor", Color.gray);
                 stealthMaterial.SetColor("_TintColor", Color.gray);
                 gunSprite.meshRender.material.SetColor("_TintColor", Color.gray);
-            }
-
-            if (Input.GetButtonDown("Special"))
-            {
-                PressSpecial();
             }
         }
 
@@ -119,129 +142,85 @@ namespace Cobro
             public int maxBulletCount = 6;
         }
 
-        protected override void PressSpecial() //rewrite this to be more brobase ili bro lee primer sa f (!this.hasBeenCoverInAcid && this.health > 0 && this.SpecialAmmo > 0 && !this.usingSpecial) linija 839
-        {
-            if (this.specialActive)  // Check if the special mode is active
-            {
-                if (CanUseSpecial())  
-                {
-                    SetupSpecialAttack();  
-                    FireSpecialWeapon();
-                }
-                else  // Special mode is active but no special ammo
-                {
-                    HeroController.FlashSpecialAmmo(base.playerNum);
-                    Sound.GetInstance().PlaySoundEffectAt(this.emptyGunSound, 1f, base.transform.position);
-                    StartReverseSpecialAnimation();
-                }
-            }
-            else  // Special mode isn't active
-            {
-                if (CanUseSpecial())  // If special mode can be activated
-                {
-                    ActivateSpecialMode();
-                    this.sprite.GetComponent<Renderer>().material = this.stealthMaterial;  
-                    this.gunSprite.meshRender.material = this.stealthGunMaterial; 
-                    this.firstSpecialPress = false;
-                }
-                else  // No special ammo and special mode isn't active
-                {
-                    HeroController.FlashSpecialAmmo(base.playerNum);
-                }
-            }
-        }
-
 
         private bool CanUseSpecial()
         {
             return !this.hasBeenCoverInAcid && !this.isUsingSpecial && this.health > 0 && this.SpecialAmmo > 0;
         }
-
-        private void StartReverseSpecialAnimation()
-        {
-
-            this.isUsingSpecial = true;
-            this.usingSpecialFrame = 5; 
-            this.isReversingSpecial = true; 
-
-            
-            this.gunSprite.gameObject.SetActive(false);
-            foreach (Renderer renderer in this.gunSprite.GetComponentsInChildren<Renderer>())
-            {
-                renderer.enabled = false;
-            }
-
-            // Set the main sprite to the normal material but keep it active
-            this.sprite.GetComponent<Renderer>().material = this.normalMaterial; 
-            this.gunSprite.meshRender.material = this.normalGunMaterial; 
-
-            this.specialActive = false; 
-            this.specialModeDeactivated = true; // flag to indicate special mode deactivation
-        }
-
-        protected override void AnimateSpecial()
-        {
-            
-            this.SetSpriteOffset(0f, 0f);
-            this.DeactivateGun();
-            this.frameRate = 0.0909f;
-
-            int frameIndex;
-            if (this.isReversingSpecial)
-            {
-                
-                frameIndex = 23 + Mathf.Clamp(this.usingSpecialFrame, 0, 9);
-                this.sprite.SetLowerLeftPixel(frameIndex * this.spritePixelWidth, 9 * this.spritePixelHeight);
-                --this.usingSpecialFrame;
-            }
-            else
-            {
-                
-                frameIndex = 23 + Mathf.Clamp(this.usingSpecialFrame, 0, 9);
-                this.sprite.SetLowerLeftPixel(frameIndex * this.spritePixelWidth, 9 * this.spritePixelHeight);
-                ++this.usingSpecialFrame;
-            }
-
-            
-            if (this.usingSpecialFrame == 0)
-            {
-                this.UseSpecial();
-            }
-
-            if (this.usingSpecialFrame >= 9)
-            {
-                this.usingSpecialFrame = 0;
-                this.isUsingSpecial = false;
-
-                this.ActivateGun();
-                this.ChangeFrame();
-            }
-        }
-
-        protected override void ChangeFrame()
-        {
-            if (this.isUsingSpecial)
-            {
-                AnimateSpecial();
-            }
-            else
-            {
-                base.ChangeFrame();
-            }
-        }
-      
-
-        private void ActivateSpecialMode()
-        {
-            base.material = this.stealthMaterial;
-            this.gunSprite.meshRender.material = this.stealthGunMaterial;
-            //mozda ovde da bude cela special logika nakon gotove animacije
-        }
-
         private void UseSpecialAmmo()
         {
             int specialAmmo = this.SpecialAmmo;
             this.SpecialAmmo = specialAmmo - 1;
+        }
+
+        protected override void UseFire()
+        {
+            if (this.isUsingSpecial)
+            {
+                return; // Do not allow primary fire when using special
+            }
+
+            if (this.doingMelee)
+            {
+                this.CancelMelee();
+            }
+
+            float num = base.transform.localScale.x;
+            if (!base.IsMine && base.Syncronize)
+            {
+                num = (float)this.syncedDirection;
+            }
+            if (Connect.IsOffline)
+            {
+                this.syncedDirection = (int)base.transform.localScale.x;
+            }
+
+            // Call the FirePrimaryWeapon method
+            this.FirePrimaryWeapon();
+        }
+
+        private void ActivateSpecialMode()
+        {
+            this.isUsingSpecial = true;
+            base.material = this.stealthMaterial;
+            this.gunSprite.meshRender.material = this.stealthGunMaterial;
+        }
+
+        protected override void UseSpecial()
+        {
+            if (this.specialProjectile != null)
+            {
+                float num = base.transform.localScale.x * 26f;
+                float num2 = 8.3f;
+                float num3;
+                float num4;
+                if (base.transform.localScale.x > 0f)
+                {
+                    num3 = 15f;     //ovo pomeraj za muzzle i ovo ispod u minusu isto
+                    num4 = 8.3f;
+                }
+                else
+                {
+                    num3 = -15f;
+                    num4 = 8.3f;
+                }
+                float num5 = base.transform.localScale.x * 750f;
+                float num6 = (float)UnityEngine.Random.Range(-10, 10);
+                this.gunFrame = 3;
+                this.SetGunSprite(this.gunFrame, 0);
+                EffectsController.CreateMuzzleFlashMediumEffect(base.X + num3, base.Y + num4, -20f, num5 * 0.06f, num6 * 0.06f, base.transform);
+                Sound.GetInstance().PlaySoundEffectAt(Cobro.CobroGunSounds, 0.9f, base.transform.position, 0.9f + this.pitchShiftAmount, true, false, false, 0f); //mozda ovo 1f podesiti
+                Map.DisturbWildLife(base.X, base.Y, 60f, base.playerNum);
+                SortOfFollow.Shake(0.4f, 0.4f);
+                this.pressSpecialFacingDirection = (int)base.transform.localScale.x;
+                this.yI += 10f;
+                this.xIBlast = -base.transform.localScale.x * 15f;
+
+                if (this.specialAmmo <= 0)
+                {
+                   this.DeactivateSpecialMode();
+                }
+            }
         }
 
         private void SetupSpecialAttack()
@@ -260,7 +239,7 @@ namespace Cobro
                 num3 = -15f;
                 num4 = 8.3f;
             }
-            float num5 = base.transform.localScale.x * 850f;
+            float num5 = base.transform.localScale.x * 750f;
             float num6 = (float)UnityEngine.Random.Range(-10, 10);
             this.gunFrame = 3;
             this.SetGunSprite(this.gunFrame, 0);
@@ -275,52 +254,84 @@ namespace Cobro
 
         private void FireSpecialWeapon()
         {
+            EffectsController.CreateShrapnel(this.bulletShell, base.X + base.transform.localScale.x * 2f, base.Y + 13f, 2f, 30f, 6f, -base.transform.localScale.x * 50f, 90f);
             float x = base.X + base.transform.localScale.x * 26f;
             float y = base.Y + 8.3f;
             float xI = base.transform.localScale.x * 750f;
             float yI = (float)UnityEngine.Random.Range(-10, 10);
             ProjectileController.SpawnProjectileLocally(this.specialProjectile, this, x, y, xI, yI, base.playerNum);
-            UseSpecialAmmo(); 
+            UseSpecialAmmo(); // Decrement special ammo here
         }
-
-        protected override void UseFire()
+        private IEnumerator AnimateAndActivateSpecial()
         {
-            if (this.specialActive)
+            if (this.isAnimatingSpecial)
             {
-                if (this.specialModeDeactivated) 
-                {
-                    this.specialModeDeactivated = false; 
-                    this.specialActive = false; 
-                }
-                this.ActivateGun();
-                this.HandlePrimaryFire();
+                yield break;
             }
-            else
+
+            this.isAnimatingSpecial = true;
+            AnimateSpecial(); // Assuming this method handles the animation frame update
+
+            yield return new WaitForSeconds(animationDuration);
+
+            ActivateSpecialMode();
+            this.isUsingSpecial = true;
+            this.specialMode = true;     
+            this.isAnimatingSpecial = false;
+        }
+
+        protected override void AnimateSpecial()
+        {
+            this.SetSpriteOffset(0f, 0f);
+            this.DeactivateGun();
+            this.frameRate = 0.0334f;
+
+            // Use Mathf.Clamp to ensure frame stays within the desired range
+            int frame = Mathf.Clamp(base.frame, 0, 8);
+            this.sprite.SetLowerLeftPixel((23 + frame) * this.spritePixelWidth, 9 * this.spritePixelHeight);
+
+            // Check if the animation has reached its end
+            if (base.frame >= 8)
             {
+                base.frame = 0;
+                this.isAnimatingSpecial = false;
+                this.specialMode = true; // Activate special mode
+                this.isUsingSpecial = true;
+                this.ActivateSpecialMode();
                 this.ActivateGun();
-                this.HandlePrimaryFire();
             }
         }
-
-        private void HandlePrimaryFire()
+        private void DeactivateSpecialMode()
         {
-            base.material = this.normalMaterial;
-            this.gunSprite.meshRender.material = this.normalGunMaterial;
-            this.FirePrimaryWeapon();
-        }
-
-        private void FirePrimaryWeapon()
-        {
-
-           // if (this.attachedToZipline == null)
-            //{
-            //    this.gunFrame = ? 6 : 3);
-           // }
-            if (this.isUsingSpecial)
+            if (isReversingSpecial)
             {
-                // Disable primary fire while using the special ability
                 return;
             }
+
+            ReverseAnimation();
+            this.isUsingSpecial = false;
+            this.specialMode = false;
+            base.material = this.normalMaterial;
+            this.gunSprite.meshRender.material = this.normalGunMaterial;
+            HeroController.FlashSpecialAmmo(base.playerNum);
+            Sound.GetInstance().PlaySoundEffectAt(this.emptyGunSound, 1f, base.transform.position);
+            isReversingSpecial = false;
+        }
+        private void ReverseAnimation()
+        {
+            if (this.usingSpecialFrame > 0)
+            {
+                --this.usingSpecialFrame;
+                this.sprite.SetLowerLeftPixel((23 + this.usingSpecialFrame) * this.spritePixelWidth, 9 * this.spritePixelHeight);
+            }
+        }
+        private void FirePrimaryWeapon()
+        {
+            if (this.isUsingSpecial)
+            {
+                return; // Primary fire is disabled when special mode is active
+            }
+
             float num = base.transform.localScale.x * this.primaryAttackRange;
             float num2 = 8f;
             float num3;
@@ -336,7 +347,7 @@ namespace Cobro
                 num4 = 8.5f;
             }
             float num5 = base.transform.localScale.x * this.primaryAttackSpeed;
-            float num6 = (float)UnityEngine.Random.Range(-20, 20); //navodno disperse
+            float num6 = (float)UnityEngine.Random.Range(-15, 15); //navodno disperse
             this.gunFrame = 3;
             this.SetGunSprite(this.gunFrame, 0);                                                             //10f vise gore i dole u odnosu + ili -        //25f veci veriety sto je veci br to menjaj
             ProjectileController.SpawnProjectileLocally(this.primaryProjectile, this, base.X + num, base.Y + num2, num5, num6 - 10f + UnityEngine.Random.value * 35f, base.playerNum).life = this.primaryProjectileLifetime;
@@ -344,32 +355,6 @@ namespace Cobro
             Sound.GetInstance().PlaySoundEffectAt(Cobro.MachineGunSounds, 0.45f, base.transform.position, 1f + this.pitchShiftAmount, true, false, false, 0f);
         }
 
-        protected override void AnimateZipline() //nije zavrseno
-        {
-            base.AnimateZipline();
-            if (this.isUsingSpecial)
-            {
-                Vector3 b = new Vector3(0f, 1f, 0f); //mozda ovo podesavati
-                this.gunSprite.transform.position = base.transform.position + b;
-                this.gunFrame = 3;
-                this.SetGunSprite(this.gunFrame, 0);
-            }
-        }
-
-        protected override void StartCustomMelee() //not finished
-        {
-            if (!this.doingMelee || base.frame > 4) //izmeniti value
-            {
-                base.frame = 0;
-                base.counter = -0.05f; //izmeniti value
-                this.AnimateMelee(); //ovo nismo jos definisali
-            }
-            else
-            {
-                this.meleeFollowUp = true;
-            }
-            this.StartMeleeCommon();
-        }
         protected override void OnDestroy()
         {
             base.OnDestroy();
