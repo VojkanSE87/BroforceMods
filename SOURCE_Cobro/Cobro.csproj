@@ -25,23 +25,38 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\..\..\COBRO ceo folder sa onim za complie\Cobro\bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
-      <HintPath>..\..\libs\Core Libs\0Harmony.dll</HintPath>
+      <HintPath>..\..\..\..\..\BROFORCE FOREVER\BroForce\Broforce_beta_Data\Managed\UnityModManager\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\libs\Core Libs\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\..\..\..\BROFORCE FOREVER\BroForce\Broforce_beta_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="BroMakerLib">
-      <HintPath>..\..\..\Bro-Maker\BroMakerLib\bin\Debug\BroMakerLib.dll</HintPath>
+      <HintPath>..\..\..\..\..\BROFORCE FOREVER\MODS\BroMaker\BroMakerLib.dll</HintPath>
+    </Reference>
+    <Reference Include="BroMakerLib.Editor">
+      <HintPath>..\..\..\..\..\BROFORCE FOREVER\MODS\BroMaker\BroMakerLib.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="BroMakerLib.UnityMod">
+      <HintPath>..\..\..\..\..\BROFORCE FOREVER\MODS\BroMaker\BroMakerLib.UnityMod.dll</HintPath>
+    </Reference>
+    <Reference Include="dnlib">
+      <HintPath>..\..\..\..\..\BROFORCE FOREVER\BroForce\Broforce_beta_Data\Managed\UnityModManager\dnlib.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
-      <HintPath>..\..\libs\Extra Libs\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\..\..\..\..\BROFORCE FOREVER\MODS\RocketLib\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="RocketLib">
+      <HintPath>..\..\..\..\..\BROFORCE FOREVER\MODS\RocketLib\RocketLib.dll</HintPath>
+    </Reference>
+    <Reference Include="RocketLibUMM">
+      <HintPath>..\..\..\..\..\BROFORCE FOREVER\MODS\RocketLib\RocketLibUMM.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -50,43 +65,38 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
-      <HintPath>..\..\libs\Core Libs\UnityEngine.dll</HintPath>
+      <HintPath>..\..\..\..\..\BroForce.v3148\Game\Broforce_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.AudioModule">
-      <HintPath>..\..\libs\Extra Libs\UnityEngine.AudioModule.dll</HintPath>
+      <HintPath>..\..\..\..\..\BroForce.v3148\Game\Broforce_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\..\libs\Core Libs\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>..\..\..\..\..\BroForce.v3148\Game\Broforce_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.IMGUIModule">
-      <HintPath>..\..\libs\Core Libs\UnityEngine.IMGUIModule.dll</HintPath>
+      <HintPath>..\..\..\..\..\BroForce.v3148\Game\Broforce_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.PhysicsModule">
-      <HintPath>..\..\libs\Extra Libs\UnityEngine.PhysicsModule.dll</HintPath>
+      <HintPath>..\..\..\..\..\BroForce.v3148\Game\Broforce_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">
-      <HintPath>..\..\libs\Core Libs\UnityEngine.TextRenderingModule.dll</HintPath>
+      <HintPath>..\..\..\..\..\BroForce.v3148\Game\Broforce_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>..\..\libs\Core Libs\UnityEngine.UI.dll</HintPath>
+      <HintPath>..\..\..\..\..\BroForce.v3148\Game\Broforce_Data\Managed\UnityEngine.UI.dll</HintPath>
     </Reference>
     <Reference Include="UnityModManager">
-      <HintPath>..\..\libs\Core Libs\UnityModManager.dll</HintPath>
+      <HintPath>..\..\..\..\..\BROFORCE FOREVER\BroForce\Broforce_beta_Data\Managed\UnityModManager\UnityModManager.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Bro.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="Sprites\avatar.png" />
-    <EmbeddedResource Include="Sprites\cutscene.png" />
-    <EmbeddedResource Include="Sprites\gunSprite.png" />
-    <EmbeddedResource Include="Sprites\gunSpriteSpecial.png" />
-    <EmbeddedResource Include="Sprites\sprite.png" />
-    <EmbeddedResource Include="Sprites\spriteSpecial.png" />
-    <EmbeddedResource Include="Sprites\special.png" />
+    <Compile Include="CoorsCanProjectile.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>del "%25BROPATH%25\Cobro\*.cache"</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
 </Project>
