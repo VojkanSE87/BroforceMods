@@ -1,0 +1,12 @@
+{
+	"Name": "Correct Rambro",
+	"Wearer": "Rambro",
+	"Clothes": {
+
+		"sprite": "CorrectRambroSprite.png"
+
+	 },
+	"Stats": {
+		
+	}
+}

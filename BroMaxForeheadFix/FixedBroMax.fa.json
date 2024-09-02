@@ -1,0 +1,12 @@
+{
+	"Name": "Fixed BroMax",
+	"Wearer": "BroMax",
+	"Clothes": {
+
+		"sprite": "FixedBroMax.png"
+
+	 },
+	"Stats": {
+			
+	}
+}
