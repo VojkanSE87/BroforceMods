@@ -41,10 +41,10 @@ namespace Cobro
         private int usingSpecialFrame = 0;
 
         private float specialAnimationTimer = 0f;
-        private bool isReversingSpecial = false; // New flag to track reverse animation state
+        private bool isReversingSpecial = false; 
 
-        private bool isDelayingPrimaryFire = false; // New flag to track primary fire delay
-        private float primaryFireDelayTimer = 0f; // Timer for primary fire delay
+        private bool isDelayingPrimaryFire = false;
+        private float primaryFireDelayTimer = 0f; 
 
         public float muzzleFlashOffsetXOnZiplineLeft = 8f;
         public float muzzleFlashOffsetYOnZiplineLeft = 2.5f;
@@ -75,7 +75,6 @@ namespace Cobro
 
             coorscanPrefab = new GameObject("CoorsCan", new Type[] { typeof(Transform), typeof(MeshFilter), typeof(MeshRenderer), typeof(SpriteSM), typeof(CoorsCan) }).GetComponent<CoorsCan>();
             coorscanPrefab.enabled = false;
-            // dynamitePrefab.soundHolder = (HeroController.GetHeroPrefab(HeroType.McBrover) as McBrover).projectile.soundHolder;
         }
 
         private void InitializeResources()
@@ -133,7 +132,7 @@ namespace Cobro
                 Cobro.DashingMeleeSounds[0] = ResourcesController.GetAudioClip(Path.Combine(directoryName, "sounds"), "MeleeHit_1.wav");
                 Cobro.DashingMeleeSounds[1] = ResourcesController.GetAudioClip(Path.Combine(directoryName, "sounds"), "MeleeHit_2.wav");
             }
-            this.emptyGunSound = ResourcesController.GetAudioClip(Path.Combine(directoryName, "sounds"), "EmptyGun.wav"); // Initialize empty gun sound
+            this.emptyGunSound = ResourcesController.GetAudioClip(Path.Combine(directoryName, "sounds"), "EmptyGun.wav"); 
 
         }
 
@@ -156,9 +155,9 @@ namespace Cobro
             // Handle special mode
             if (this.UsingSpecial || this.isReversingSpecial && !this.doingMelee)
             {
-                AnimateSpecial(); // Call AnimateSpecial directly
+                AnimateSpecial(); 
             }
-            // Update primary fire delay timer
+           
             if (isDelayingPrimaryFire)
             {
                 primaryFireDelayTimer += Time.deltaTime;
@@ -208,24 +207,21 @@ namespace Cobro
 
         protected override void UseFire()
         {
-            // Check if the conditions are met to allow primary weapon firing
+            
             if (!this.usingSpecial && !this.specialActive && !this.doingMelee && !this.attachedToZipline)
             {
-                this.FirePrimaryWeapon(); // Call FirePrimaryWeapon if none of the conditions are active
+                this.FirePrimaryWeapon(); 
             }
             else
-            {
-                // Handle special mode and melee conditions
+            {              
                 if (this.usingSpecial || this.specialActive)
                 {
                     ReverseSpecialMode();
-
                 }
 
                 if (this.doingMelee)
                 {
                     this.CancelMelee();
-
                 }
             }
             if (this.attachedToZipline != null)
@@ -245,9 +241,9 @@ namespace Cobro
                     num4 = 8.5f;
                 }
                 float num5 = base.transform.localScale.x * this.primaryAttackSpeed;
-                float num6 = (float)UnityEngine.Random.Range(-15, 15); //navodno disperse
+                float num6 = (float)UnityEngine.Random.Range(-15, 15); //disperse
                 this.gunFrame = 3;
-                this.SetGunSprite(this.gunFrame, 0); //10f vise gore i dole u odnosu + ili -        //25f veci veriety sto je veci br to menjaj
+                this.SetGunSprite(this.gunFrame, 0); 
                 ProjectileController.SpawnProjectileLocally(this.primaryProjectile, this, base.X + num, base.Y + num2, num5, num6 - 10f + UnityEngine.Random.value * 35f, base.playerNum).life = this.primaryProjectileLifetime;
 
                 float flashX = base.X + num3;
@@ -258,13 +254,11 @@ namespace Cobro
                     // Adjust flash position for zipline based on facing direction
                     if (base.transform.localScale.x > 0f)
                     {
-                        // Facing right
                         flashX += muzzleFlashPrimaryOffsetXOnZiplineRight;
                         flashY += muzzleFlashPrimaryOffsetYOnZiplineRight;
                     }
                     else
                     {
-                        // Facing left
                         flashX += muzzleFlashPrimaryOffsetXOnZiplineLeft;
                         flashY += muzzleFlashPrimaryOffsetYOnZiplineLeft;
                     }
@@ -286,13 +280,12 @@ namespace Cobro
             if (!specialActive && CanUseSpecial())
             {
                 // Activate special animation
-                this.UsingSpecial = true; // Set UsingSpecial to true here
+                this.UsingSpecial = true;
                 sprite.GetComponent<Renderer>().material = stealthMaterial;
                 gunSprite.meshRender.material = stealthGunMaterial;
             }
             else if (specialActive)
             {
-                // If special is already active, try to fire
                 if (this.SpecialAmmo > 0)
                 {
                     SetupSpecialAttack();
@@ -303,32 +296,28 @@ namespace Cobro
 
                     HeroController.FlashSpecialAmmo(base.playerNum);
                     Sound.GetInstance().PlaySoundEffectAt(emptyGunSound, 1f, base.transform.position);
-                    // Do not reverse special mode immediately, wait for another press
+                    // do not reverse special mode immediately, wait for another press
                     return;
                 }
             }
             else if (!specialActive && this.SpecialAmmo <= 0)
             {
-                // If special mode is not active and ammo is depleted, only allow empty gun sound and flash
+                // if special mode is not active and ammo is depleted, only allow empty gun sound and flash
                 HeroController.FlashSpecialAmmo(base.playerNum);
-                Sound.GetInstance().PlaySoundEffectAt(emptyGunSound, 1f, base.transform.position);
-                // Prevent further actions until ammo is replenished
+                Sound.GetInstance().PlaySoundEffectAt(emptyGunSound, 1f, base.transform.position);              
             }
         }
 
-        protected override void AnimateSpecial() // ne radi animacija, ovde je nesto do animacije ovo metoda i sl
+        protected override void AnimateSpecial() 
         {
-            this.frameRate = 0.0334f; // Frame rate for animation
+            this.frameRate = 0.0334f; 
             if (this.wasRunning)
-            {
-                // Skip the special animation if running or using RunGun
+            {  
                 this.UsingSpecial = false;
                 this.isReversingSpecial = false;
-                return; // Exit the method to prevent the animation
+                return; // exit to prevent the animation
             }
 
-
-            // Check if the conditions should prevent animation
             if (this.wallClimbing || this.wallDrag)
             {
                 // Skip the animation logic but still switch the mode/sprite
@@ -342,10 +331,9 @@ namespace Cobro
                     this.UsingSpecial = false;
                     this.ChangeFrame();
                 }
-                return; // Exit the method to prevent the animation
+                return; 
             }
-
-            // Continue with the normal animation logic if no conditions are met
+         
             if (this.UsingSpecial)
             {
                 this.DeactivateGun();
@@ -397,12 +385,12 @@ namespace Cobro
                 if (this.attachedToZipline != null)
                 {
                     if (this.right && (this.attachedToZipline.Direction.x < 0f || this.attachedToZipline.IsHorizontalZipline)) // Going right on the zipline
-                    {                                                    //nazad/napred   gore/dole  2f je otprilike 1 piksel
+                    {                                               
                         this.gunSprite.transform.localPosition = new Vector3(xOffset + 2f, yOffset + 1f, -1f); // Adjust X and Y for primary weapon when moving right (up)
                     }
-                    else if (this.left && (this.attachedToZipline.Direction.x > 0f || this.attachedToZipline.IsHorizontalZipline)) // Going left on the zipline
+                    else if (this.left && (this.attachedToZipline.Direction.x > 0f || this.attachedToZipline.IsHorizontalZipline)) 
                     {
-                        this.gunSprite.transform.localPosition = new Vector3(xOffset - 2f, yOffset + 1f, -1f); // Adjust X and Y for primary weapon when moving left (up)
+                        this.gunSprite.transform.localPosition = new Vector3(xOffset - 2f, yOffset + 1f, -1f); 
                     }
                 }
                 else
@@ -419,14 +407,14 @@ namespace Cobro
                     {
                         this.gunSprite.transform.localPosition = new Vector3(xOffset + 4f, yOffset + 1f, -1f); // Adjust X and Y for special weapon when moving right (up)
                     }
-                    else if (this.left && (this.attachedToZipline.Direction.x > 0f || this.attachedToZipline.IsHorizontalZipline)) // Going left on the zipline
+                    else if (this.left && (this.attachedToZipline.Direction.x > 0f || this.attachedToZipline.IsHorizontalZipline))
                     {
-                        this.gunSprite.transform.localPosition = new Vector3(xOffset - 4f, yOffset + 1f, -1f); // Adjust X and Y for special weapon when moving left (up)
+                        this.gunSprite.transform.localPosition = new Vector3(xOffset - 4f, yOffset + 1f, -1f); 
                     }
                 }
                 else
                 {
-                    this.gunSprite.transform.localPosition = new Vector3(xOffset, yOffset + 0.4f, -1f); // Default special position
+                    this.gunSprite.transform.localPosition = new Vector3(xOffset, yOffset + 0.4f, -1f); 
                 }
             }
         }
@@ -436,12 +424,9 @@ namespace Cobro
         protected override void FireFlashAvatar()
         {
             if (this.isReversingSpecial || this.isDelayingPrimaryFire)
-            {
-                // Skip the avatar flash logic if reversing special mode or during the primary fire delay
-                return;
+            {                
+                return; // skip the avatar flash logic if reversing special mode or during the primary fire delay
             }
-
-            // Call the base method to execute the avatar flash logic
             base.FireFlashAvatar();
         }
 
@@ -465,8 +450,6 @@ namespace Cobro
 
                 if (this.attachedToZipline != null)
                 {
-
-                    // Adjust flash position for zipline based on facing direction
                     if (base.transform.localScale.x > 0f)
                     {
                         // Facing right
@@ -484,7 +467,7 @@ namespace Cobro
                 EffectsController.CreateMuzzleFlashMediumEffect(flashX, flashY, -20f, num5 * 0.06f, num6 * 0.06f, base.transform);
                 Sound.GetInstance().PlaySoundEffectAt(Cobro.CobroGunSounds, 1f, base.transform.position, 0.88f + this.pitchShiftAmount, true, false, false, 0f);
                 Map.DisturbWildLife(base.X, base.Y, 60f, base.playerNum);
-                SortOfFollow.Shake(0.4f, 0.4f);                                             //moglo bi se ovo malo videti da se pojaca
+                SortOfFollow.Shake(0.4f, 0.4f);                                           
                 this.avatarGunFireTime = 0.06f; 
                 HeroController.SetAvatarFire(base.playerNum, this.usePrimaryAvatar);            
                 this.pressSpecialFacingDirection = (int)base.transform.localScale.x;
@@ -503,14 +486,13 @@ namespace Cobro
                 float yI = (float)UnityEngine.Random.Range(-10, 10);
 
                 if (this.attachedToZipline != null)
-                {
-                    // Adjust projectile position and velocity for zipline
+                {                 
                     //ne radi x += base.transform.localScale.x > 0f ? 1f : -1f;
                 }
 
                 ProjectileController.SpawnProjectileLocally(this.specialProjectile, this, x, y, xI, yI, base.playerNum);
                 
-                UseSpecialAmmo(); // Decrement special ammo here
+                UseSpecialAmmo(); 
             }
             else
             {
@@ -525,8 +507,8 @@ namespace Cobro
             this.UsingSpecial = false;
             this.specialActive = false;
             this.isReversingSpecial = true; 
-            this.usingSpecialFrame = 8; // Start from the last frame
-            this.specialAnimationTimer = 0f; // Reset the timer for reverse animation
+            this.usingSpecialFrame = 8; 
+            this.specialAnimationTimer = 0f; 
         }
 
         private void FirePrimaryWeapon()
@@ -555,13 +537,13 @@ namespace Cobro
                 num4 = 8.5f;
             }
             float num5 = base.transform.localScale.x * this.primaryAttackSpeed;
-            float num6 = (float)UnityEngine.Random.Range(-15, 15); //navodno disperse
+            float num6 = (float)UnityEngine.Random.Range(-15, 15); 
             this.gunFrame = 3;
-            this.SetGunSprite(this.gunFrame, 0);                                                             //10f vise gore i dole u odnosu + ili -        //25f veci veriety sto je veci br to menjaj
+            this.SetGunSprite(this.gunFrame, 0);                                                            
             ProjectileController.SpawnProjectileLocally(this.primaryProjectile, this, base.X + num, base.Y + num2, num5, num6 - 10f + UnityEngine.Random.value * 35f, base.playerNum).life = this.primaryProjectileLifetime;
             EffectsController.CreateMuzzleFlashEffect(base.X + num3, base.Y + num4, -21f, num5 * 0.15f, num6 * 0.15f, base.transform);
             Sound.GetInstance().PlaySoundEffectAt(Cobro.MachineGunSounds, 0.60f, base.transform.position, 0.85f + this.pitchShiftAmount, true, false, false, 0f);
-        }                                                                // volume 
+        }                                                         
 
         protected override void RunGun()
         {
@@ -603,7 +585,6 @@ namespace Cobro
             {
                 this.meleeFollowUp = true;
             }
-
             // Lock movement during melee 
             this.xI = 0f;
             this.yI = 0f;
@@ -616,7 +597,7 @@ namespace Cobro
         {
             if (this.wallClimbing || this.wallDrag)
             {
-                return; // Prevent knife melee action while wall climbing or dragging
+                return; // prevent knife melee action while wall climbing or dragging
             }
             if (this.dashingMelee)
             {
@@ -629,12 +610,12 @@ namespace Cobro
                 {
                     if (!this.isInQuicksand)
                     {
-                        this.xI = this.speed * 1f * base.transform.localScale.x;  // Move character during knife melee
+                        this.xI = this.speed * 1f * base.transform.localScale.x; 
                     }
                 }
                 else
                 {
-                    this.ApplyFallingGravity();  // Apply gravity after the initial dash frames
+                    this.ApplyFallingGravity();  
                 }
             }
             else
@@ -651,10 +632,10 @@ namespace Cobro
 
             if (this.wallClimbing || this.wallDrag || this.jumpingMelee || this.doingMelee)
             {
-                return; // Prevent knife melee action while wall climbing or dragging
+                return; 
             }
 
-            if (!this.meleeFollowUp && this.CanStartNewMelee()) //mozda ubaciti neki delay
+            if (!this.meleeFollowUp && this.CanStartNewMelee()) 
             {
                 base.frame = 0;
                 base.counter -= 0.0667f;
@@ -662,15 +643,15 @@ namespace Cobro
             }
             else
             {
-                return; // Add this line to prevent further execution if melee is not started
+                return; 
             }
             this.throwingMook = (this.nearbyMook != null && this.nearbyMook.CanBeThrown());
             this.ResetMeleeValues();
             this.lerpToMeleeTargetPos = 0f;
             this.doingMelee = true;
             this.showHighFiveAfterMeleeTimer = 0f;
-            this.SetMeleeType();  // Ensure that melee type is set properly before deactivating the gun
-            this.DeactivateGun(); // Deactivate gun only if a valid melee is started
+            this.SetMeleeType();  
+            this.DeactivateGun(); 
             this.meleeStartPos = base.transform.position;
             this.AnimateMelee();
         }
@@ -708,25 +689,21 @@ namespace Cobro
             if (this.wallClimbing || this.wallDrag || base.actionState == ActionState.Jumping || base.Y > this.groundHeight + 1f)
             {
                 this.CancelMelee();
-                return; // Exit the method to prevent the melee animation during certain states
+                return; 
             }
 
             
             if (base.frame == 3)
             {
-                // Only perform the knife melee attack if it's a dashing melee (knife melee)
                 if (this.dashingMelee)
                 {
                     PerformKnifeMeleeAttack(shouldTryHitTerrain: true, playMissSound: true);
-                }
-                // Otherwise, skip the attack logic for standing melee
+                }              
             }
-
-            // Disable movement during melee animations
+          
             this.xI = 0f;
             this.yI = 0f;
-
-            // Custom frame rate handling
+           
             this.frameRate = 0.0667f;
             base.counter += Time.deltaTime;
 
@@ -736,10 +713,8 @@ namespace Cobro
                 base.counter = 0f;
             }
 
-            // Dashing Melee Animation Logic
             if (this.dashingMelee)
-            {
-                // Row 6, column 17 for 7 frames for dashing melee animation
+            {       
                 int num = 6;
                 int num2 = 17;
                 int frame = Mathf.Clamp(base.frame, 0, 7);
@@ -755,20 +730,17 @@ namespace Cobro
             }
             else
             {
-                // Regular Melee Animation Logic
                 int num = 10;
                 int num2 = 11;
                 int frame = Mathf.Clamp(base.frame, 0, 20);
 
                 this.sprite.SetLowerLeftPixel((float)(num2 * this.spritePixelWidth + frame * this.spritePixelWidth), (float)(num * this.spritePixelHeight));
 
-                // Handle the projectile throw at the appropriate frame
                 if (base.frame == 18)
                 {
                     this.ThrowProjectile();
                 }
 
-                // End the melee attack when the last frame is reached
                 if (base.frame >= 20)
                 {
                     base.frame = 0;
