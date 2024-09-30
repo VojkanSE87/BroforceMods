@@ -16,34 +16,31 @@ namespace Cobro
         public static Material storedMat;
         private Rigidbody rigidbody;
         private MonoBehaviour damageSender;
-        AudioClip explosionSound;                                       //replace sa empty can sound or something
+        AudioClip explosionSound;                                      
         public Vector3 centerOfMass = new Vector3(0f, -0.3f, 0f);
         private static bool bounceX;
         private static bool bounceY;
         private bool hasCollided = false;
-        private float soundThreshold = 0.5f; // 2309 Movement threshold to play sounds
-        private AudioClip[] canSounds;  //2309
-        public AudioClip[] canRollSounds; // 2309 Array for rolling sounds
-        private AudioSource audioSource;//2309
-        public float impactThreshold = 1f; // 2309 Time threshold in seconds for impact sound
-                                             // Cooldown between impact sounds
+        private float soundThreshold = 0.5f; 
+        private AudioClip[] canSounds;  
+        public AudioClip[] canRollSounds; 
+        private AudioSource audioSource;
+        public float impactThreshold = 1f; 
+                                    
         private float nextImpactSoundTime = 0f;
-        private float impactSoundCooldown = 0.5f; // The minimum time that must pass before playing another impact sound
-        public float yMovementThreshold = 0.5f; // 2309 Threshold to determine significant y-axis movement
-        private float timeSinceLastSound = 0f; //2309 Timer to track time since last sound
-        private Vector3 lastPosition; // 2309 To track the can's previous position
-        private Rigidbody rb; //2309
-        public LayerMask collisionLayers; //2309
+        private float impactSoundCooldown = 0.5f; 
+        public float yMovementThreshold = 0.5f; 
+        private float timeSinceLastSound = 0f;
+        private Vector3 lastPosition; 
+        private Rigidbody rb;
+        public LayerMask collisionLayers;
 
+        private float currentVolume = 1f; 
+        private float volumeReductionStep = 0.3f; 
+        private float minVolume = 0.2f;
 
-        private float currentVolume = 1f; // Added to track volume
-        private float volumeReductionStep = 0.3f; // The amount to reduce volume per collision
-        private float minVolume = 0.2f; // Minimum volume
-
-
-        // Cooldown-related variables
-        private float nextSoundTime = 0f; // Tracks when the next sound can be played
-        private float soundCooldown = 0.5f; // Cooldown duration in seconds
+        private float nextSoundTime = 0f; 
+        private float soundCooldown = 0.5f; 
 
         protected override void Awake()
         {
@@ -60,7 +57,7 @@ namespace Cobro
                 base.gameObject.AddComponent<BoxCollider>();
             }
 
-            this.canSounds = new AudioClip[]    //2309
+            this.canSounds = new AudioClip[] 
             {
                 ResourcesController.CreateAudioClip(Path.Combine(directoryName, "sounds"), "can1.wav"),
                 ResourcesController.CreateAudioClip(Path.Combine(directoryName, "sounds"), "can2.wav"),
@@ -82,9 +79,9 @@ namespace Cobro
             this.explosionSound = ResourcesController.CreateAudioClip(Path.Combine(directoryName, "sounds"), "emptyCan.wav");
             base.Awake();
 
-            this.audioSource = gameObject.AddComponent<AudioSource>(); //2309
-            this.audioSource.playOnAwake = false;                       //2309
-            this.audioSource.loop = false;                              //2309
+            this.audioSource = gameObject.AddComponent<AudioSource>(); 
+            this.audioSource.playOnAwake = false;                      
+            this.audioSource.loop = false;                             
             this.fragileLayer = 1 << LayerMask.NameToLayer("DirtyHippie");
             this.trailRenderer = null;            
             this.bounceM = 0.2f;
@@ -99,17 +96,14 @@ namespace Cobro
             this.fadeUVs = false;
             this.useAngularFriction = true;
             this.shrapnelControlsMotion = false;
-            collisionLayers = LayerMask.GetMask("Ground", "DirtyHippie", "Switches"); //2709 "Platform" "MobileBarriers" "LargeObjects" "IndestructibleGround" ,
-
+            collisionLayers = LayerMask.GetMask("Ground", "DirtyHippie", "Switches"); 
         }
-
-        // Token: 0x0600001E RID: 30 RVA: 0x000039D8 File Offset: 0x00001BD8
+      
         protected override void Start()
         {
             this.mainMaterial = base.GetComponent<Renderer>().sharedMaterial;
             base.Start();
-            this.groundLayer = Map.groundLayer;
-            //2709 collisionLayers = LayerMask.GetMask("Ground", "Switches"); //"Platform" "MobileBarriers" "LargeObjects" "IndestructibleGround" "DirtyHippie",
+            this.groundLayer = Map.groundLayer;           
             bool hit = Physics.CheckSphere(transform.position, collisionLayers);
 
             this.RegisterGrenade();
@@ -124,7 +118,6 @@ namespace Cobro
             lastPosition = transform.position;
         }
 
-        // Token: 0x0600001F RID: 31 RVA: 0x00003A51 File Offset: 0x00001C51
         protected new virtual void RegisterGrenade()
         {
             if (this.shootable)
@@ -134,7 +127,6 @@ namespace Cobro
             Map.RegisterGrenade(this);
         }
 
-        // Token: 0x06000020 RID: 32 RVA: 0x00003A68 File Offset: 0x00001C68
         public override void ThrowGrenade(float XI, float YI, float newX, float newY, int _playerNum)
         {
             base.enabled = true;
@@ -165,10 +157,8 @@ namespace Cobro
             base.SetMinLife(0.7f);
         }
 
-        // Token: 0x06000021 RID: 33 RVA: 0x00003B84 File Offset: 0x00001D84
         public override void Launch(float newX, float newY, float xI, float yI)
-        {
-            
+        {            
             if (this == null)
             {
                 return;
@@ -277,23 +267,18 @@ namespace Cobro
             }
             this.SetPosition();
             this.sprite.offset = new Vector3(0f, -0.5f, 0f);
-            //2709 Reset volume when launching again
             currentVolume = 1f;
         }
 
         
-        private void OnCollisionEnter(Collision collision) //2309
+        private void OnCollisionEnter(Collision collision) 
         {
-
-            // 2309 
-            // Check if collision is with the specified layers and playif the can hasn't collided yet
             if (!hasCollided && (collisionLayers.value & (1 << collision.gameObject.layer)) != 0)
             {
-                // Ensure significant movement before playing the sound
                 if (Mathf.Abs(this.xI) > 1f)
                 {
-                    PlayRandomCanSound(); // Play the random sound on first impact
-                    hasCollided = true;   // Set the flag to true to prevent further sound playing
+                    PlayRandomCanSound(); 
+                    hasCollided = true; 
                 }
             }
         }
@@ -306,7 +291,7 @@ namespace Cobro
             base.X = rigidbody.position.x;
             base.Y = rigidbody.position.y;
 
-            Collider[] hitColliders = Physics.OverlapSphere(rigidbody.position, 0.5f); // Adjust the radius as needed
+            Collider[] hitColliders = Physics.OverlapSphere(rigidbody.position, 0.5f); 
             foreach (var hitCollider in hitColliders)
             {
                 if (hitCollider.gameObject != this.gameObject)
@@ -317,7 +302,7 @@ namespace Cobro
                     if (((1 << layer) & collisionLayers) != 0 && Mathf.Abs(xI) > 1f && Time.time >= nextImpactSoundTime)
                     {
                         PlayImpactSound();
-                        nextImpactSoundTime = Time.time + impactSoundCooldown; // Adjust the cooldown here
+                        nextImpactSoundTime = Time.time + impactSoundCooldown; 
                     }
 
                     break;
@@ -328,15 +313,10 @@ namespace Cobro
             {
                 Map.AttractMooks(base.X, base.Y, 200f, 100f);
                 Map.AttractAliens(base.X, base.Y, 200f, 100f);
-
-                // Call HitAllLivingUnits to apply stun effect
                 HitAllLivingUnits(this, playerNum, 0, DamageType.None, 20f, 10f, base.X, base.Y, xI, yI, false, true);
-
-                hasCollided = false; // Reset the collision flag
+                hasCollided = false; 
             }
-
-            // Check for movement in Y axis (lower threshold for smaller y movement)
-            if (Mathf.Abs(yI) < 0.1f && Mathf.Abs(xI) > 0.1f) // Y-axis threshold is very small for rolling detection
+            if (Mathf.Abs(yI) < 0.1f && Mathf.Abs(xI) > 0.1f) 
             {
                 PlayRollingSound();
             }
@@ -346,7 +326,6 @@ namespace Cobro
 
         private void PlayRollingSound()
         {
-            // Play a rolling sound from the canRollSounds array
             if (canRollSounds.Length > 0)
             {
                 AudioClip rollClip = canRollSounds[UnityEngine.Random.Range(0, canRollSounds.Length)];
@@ -356,7 +335,6 @@ namespace Cobro
 
         private void PlayImpactSound()
         {
-            // Play a heavy impact sound from the canImpactSounds array
             if (canSounds.Length > 0)
             {
                 AudioClip impactClip = canSounds[UnityEngine.Random.Range(0, canSounds.Length)];
@@ -422,15 +400,12 @@ namespace Cobro
             }
             return result;
         }
-        private void PlayRandomCanSound() //2309
+        private void PlayRandomCanSound()
         {
-            // 2709 Play a random sound from the array with decreasing volume
             int randomIndex = UnityEngine.Random.Range(0, canSounds.Length);
             audioSource.clip = canSounds[randomIndex];
             audioSource.volume = currentVolume;
             audioSource.Play();
-
-            // Reduce the volume for the next collision, ensuring it doesn't drop below the minimum volume
             currentVolume = Mathf.Max(currentVolume - volumeReductionStep, minVolume);
         }
 
