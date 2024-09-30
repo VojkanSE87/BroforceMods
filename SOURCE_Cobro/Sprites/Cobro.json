@@ -28,7 +28,7 @@
   },
   "beforeAwake": {
     "speed": 130,
-    "fireRate": 0.08,
+    "fireRate": 0.1,
     "canChimneyFlip": true,
     "originalSpecialAmmo": 6
   },

@@ -28,6 +28,7 @@ namespace Cobro
         private ProjectileData specialProjectileData;
         public static AudioClip[] CobroGunSounds;
         public static AudioClip[] MachineGunSounds;
+        public static AudioClip[] DashingMeleeSounds;
         private AudioClip emptyGunSound;
         private int specialAmmo = 6;
 
@@ -56,9 +57,13 @@ namespace Cobro
         public float muzzleFlashPrimaryOffsetYOnZiplineRight = 1f;
 
         private bool wasRunning;
+        protected bool throwingMook;
+
 
         CoorsCan coorscanPrefab;
+        private bool isTelephoneLine;
 
+        private Mook mook;
 
         protected override void Awake()
         {
@@ -122,6 +127,12 @@ namespace Cobro
                 Cobro.CobroGunSounds[4] = ResourcesController.GetAudioClip(Path.Combine(directoryName, "sounds"), "CobroGun_7.wav");
 
             }
+            if (Cobro.DashingMeleeSounds == null)
+            {
+                Cobro.DashingMeleeSounds = new AudioClip[2];
+                Cobro.DashingMeleeSounds[0] = ResourcesController.GetAudioClip(Path.Combine(directoryName, "sounds"), "MeleeHit_1.wav");
+                Cobro.DashingMeleeSounds[1] = ResourcesController.GetAudioClip(Path.Combine(directoryName, "sounds"), "MeleeHit_2.wav");
+            }
             this.emptyGunSound = ResourcesController.GetAudioClip(Path.Combine(directoryName, "sounds"), "EmptyGun.wav"); // Initialize empty gun sound
 
         }
@@ -143,7 +154,7 @@ namespace Cobro
                 gunSprite.meshRender.material.SetColor("_TintColor", Color.gray);
             }
             // Handle special mode
-            if (this.UsingSpecial || this.isReversingSpecial)
+            if (this.UsingSpecial || this.isReversingSpecial && !this.doingMelee)
             {
                 AnimateSpecial(); // Call AnimateSpecial directly
             }
@@ -260,12 +271,18 @@ namespace Cobro
                 }
 
                 EffectsController.CreateMuzzleFlashEffect(flashX, flashY, -21f, num5 * 0.15f, num6 * 0.15f, base.transform);
-                Sound.GetInstance().PlaySoundEffectAt(Cobro.MachineGunSounds, 0.40f, base.transform.position, 1f + this.pitchShiftAmount, true, false, false, 0f);
+                Sound.GetInstance().PlaySoundEffectAt(Cobro.MachineGunSounds, 0.70f, base.transform.position, 1f + this.pitchShiftAmount, true, false, false, 0f);
             }
         }
 
         protected override void PressSpecial()
         {
+            if (this.doingMelee)
+            {
+                // Skip special action if melee is active
+                return;
+            }
+
             if (!specialActive && CanUseSpecial())
             {
                 // Activate special animation
@@ -465,15 +482,16 @@ namespace Cobro
                 }
 
                 EffectsController.CreateMuzzleFlashMediumEffect(flashX, flashY, -20f, num5 * 0.06f, num6 * 0.06f, base.transform);
-                Sound.GetInstance().PlaySoundEffectAt(Cobro.CobroGunSounds, 0.9f, base.transform.position, 0.9f + this.pitchShiftAmount, true, false, false, 0f);
+                Sound.GetInstance().PlaySoundEffectAt(Cobro.CobroGunSounds, 1f, base.transform.position, 0.88f + this.pitchShiftAmount, true, false, false, 0f);
                 Map.DisturbWildLife(base.X, base.Y, 60f, base.playerNum);
-                SortOfFollow.Shake(0.4f, 0.4f);
+                SortOfFollow.Shake(0.4f, 0.4f);                                             //moglo bi se ovo malo videti da se pojaca
+                this.avatarGunFireTime = 0.06f; 
+                HeroController.SetAvatarFire(base.playerNum, this.usePrimaryAvatar);            
                 this.pressSpecialFacingDirection = (int)base.transform.localScale.x;
                 this.yI += 10f;
                 this.xIBlast = -base.transform.localScale.x * 15f;
             }
         }
-
 
         private void FireSpecialWeapon()
         {
@@ -491,6 +509,7 @@ namespace Cobro
                 }
 
                 ProjectileController.SpawnProjectileLocally(this.specialProjectile, this, x, y, xI, yI, base.playerNum);
+                
                 UseSpecialAmmo(); // Decrement special ammo here
             }
             else
@@ -505,7 +524,7 @@ namespace Cobro
 
             this.UsingSpecial = false;
             this.specialActive = false;
-            this.isReversingSpecial = true; // Set the reverse animation flag
+            this.isReversingSpecial = true; 
             this.usingSpecialFrame = 8; // Start from the last frame
             this.specialAnimationTimer = 0f; // Reset the timer for reverse animation
         }
@@ -541,8 +560,8 @@ namespace Cobro
             this.SetGunSprite(this.gunFrame, 0);                                                             //10f vise gore i dole u odnosu + ili -        //25f veci veriety sto je veci br to menjaj
             ProjectileController.SpawnProjectileLocally(this.primaryProjectile, this, base.X + num, base.Y + num2, num5, num6 - 10f + UnityEngine.Random.value * 35f, base.playerNum).life = this.primaryProjectileLifetime;
             EffectsController.CreateMuzzleFlashEffect(base.X + num3, base.Y + num4, -21f, num5 * 0.15f, num6 * 0.15f, base.transform);
-            Sound.GetInstance().PlaySoundEffectAt(Cobro.MachineGunSounds, 0.40f, base.transform.position, 1f + this.pitchShiftAmount, true, false, false, 0f);
-        }
+            Sound.GetInstance().PlaySoundEffectAt(Cobro.MachineGunSounds, 0.60f, base.transform.position, 0.85f + this.pitchShiftAmount, true, false, false, 0f);
+        }                                                                // volume 
 
         protected override void RunGun()
         {
@@ -565,87 +584,206 @@ namespace Cobro
         #region Melee
 
         protected override void StartCustomMelee()
-        {   // Detach from zipline if attached
-            if (this.attachedToZipline != null)
+        {  
+            if (this.wallClimbing || this.wallDrag || this.jumpingMelee || this.doingMelee)
             {
-                this.attachedToZipline.DetachUnit(this);
+                return;
             }
 
-            if (this.CanStartNewMelee())
+            if (!this.attachedToZipline && this.CanStartNewMelee())
             {
                 base.frame = 0;
                 base.counter -= 0.0667f;
+
                 this.AnimateMelee();
+
+                this.throwingMook = (this.nearbyMook != null && this.nearbyMook.CanBeThrown());
             }
             else if (this.CanStartMeleeFollowUp())
             {
                 this.meleeFollowUp = true;
             }
-            if (!this.jumpingMelee)
-            {
-                this.dashingMelee = true;
-                this.xI = (float)base.Direction * this.speed; //override this to make character stand still
-            }
-            this.StartMeleeCommon();
 
+            // Lock movement during melee 
+            this.xI = 0f;
+            this.yI = 0f;
+
+            this.StartMeleeCommon();
+        }
+
+
+        protected override void RunKnifeMeleeMovement()
+        {
+            if (this.wallClimbing || this.wallDrag)
+            {
+                return; // Prevent knife melee action while wall climbing or dragging
+            }
+            if (this.dashingMelee)
+            {
+                if (base.frame <= 1)
+                {
+                    this.xI = 0f;
+                    this.yI = 0f;
+                }
+                else if (base.frame <= 3)
+                {
+                    if (!this.isInQuicksand)
+                    {
+                        this.xI = this.speed * 1f * base.transform.localScale.x;  // Move character during knife melee
+                    }
+                }
+                else
+                {
+                    this.ApplyFallingGravity();  // Apply gravity after the initial dash frames
+                }
+            }
+            else
+            {
+                if (this.xI != 0f || this.yI != 0f)
+                {
+                    this.CancelMelee();
+                }
+            }
         }
 
         protected override void StartMeleeCommon()
-        {// Detach from zipline if attached
-            if (this.attachedToZipline != null)
+        {
+
+            if (this.wallClimbing || this.wallDrag || this.jumpingMelee || this.doingMelee)
             {
-                this.attachedToZipline.DetachUnit(this);
+                return; // Prevent knife melee action while wall climbing or dragging
             }
-            if (!this.meleeFollowUp && this.CanStartNewMelee())
+
+            if (!this.meleeFollowUp && this.CanStartNewMelee()) //mozda ubaciti neki delay
             {
                 base.frame = 0;
                 base.counter -= 0.0667f;
+
             }
+            else
+            {
+                return; // Add this line to prevent further execution if melee is not started
+            }
+            this.throwingMook = (this.nearbyMook != null && this.nearbyMook.CanBeThrown());
             this.ResetMeleeValues();
             this.lerpToMeleeTargetPos = 0f;
             this.doingMelee = true;
             this.showHighFiveAfterMeleeTimer = 0f;
-            this.DeactivateGun();
-            this.SetMeleeType();
+            this.SetMeleeType();  // Ensure that melee type is set properly before deactivating the gun
+            this.DeactivateGun(); // Deactivate gun only if a valid melee is started
             this.meleeStartPos = base.transform.position;
             this.AnimateMelee();
         }
 
-        protected override void AnimateMelee()
+        protected override void SetMeleeType()
         {
-            // Custom logic that would normally be handled by base.AnimateMeleeCommon()
-            this.SetSpriteOffset(0f, 0f);
-            this.rollingFrames = 0;
+            if (!this.useNewKnifingFrames)
+            {
+                this.standingMelee = true;
+                this.jumpingMelee = false;
+                this.dashingMelee = false;
+            }
+            else if (base.actionState == ActionState.Jumping || base.Y > this.groundHeight + 1f)
+            {
+                this.standingMelee = false;
+                this.jumpingMelee = true;
+                this.dashingMelee = false;
+            }
+            else if (this.right || this.left)
+            {
+                this.standingMelee = false;
+                this.jumpingMelee = false;
+                this.dashingMelee = true;
+            }
+            else
+            {
+                this.standingMelee = true;
+                this.jumpingMelee = false;
+                this.dashingMelee = false;
+            }
+        }
 
-            // Implement your custom frame rate handling here
-            this.frameRate = 0.0667f; // Adjust to control animation speed
+        protected override void AnimateMelee()
+        {                           
+            if (this.wallClimbing || this.wallDrag || base.actionState == ActionState.Jumping || base.Y > this.groundHeight + 1f)
+            {
+                this.CancelMelee();
+                return; // Exit the method to prevent the melee animation during certain states
+            }
+
+            
+            if (base.frame == 3)
+            {
+                // Only perform the knife melee attack if it's a dashing melee (knife melee)
+                if (this.dashingMelee)
+                {
+                    PerformKnifeMeleeAttack(shouldTryHitTerrain: true, playMissSound: true);
+                }
+                // Otherwise, skip the attack logic for standing melee
+            }
+
+            // Disable movement during melee animations
+            this.xI = 0f;
+            this.yI = 0f;
+
+            // Custom frame rate handling
+            this.frameRate = 0.0667f;
             base.counter += Time.deltaTime;
+
             if (base.counter >= this.frameRate)
             {
                 base.frame++;
                 base.counter = 0f;
             }
 
-            // Set sprite for the current frame
-            int num = 10; // Row 
-            int num2 = 11; // Column 
-            int frame = Mathf.Clamp(base.frame, 0, 20); // Clamp frame to the range of 0 to 19
-            this.sprite.SetLowerLeftPixel((float)(num2 * this.spritePixelWidth + frame * this.spritePixelWidth), (float)(num * this.spritePixelHeight));
-
-            // Handle the projectile throw at the appropriate frame
-            if (base.frame == 18)
+            // Dashing Melee Animation Logic
+            if (this.dashingMelee)
             {
-                this.ThrowProjectile();
+                // Row 6, column 17 for 7 frames for dashing melee animation
+                int num = 6;
+                int num2 = 17;
+                int frame = Mathf.Clamp(base.frame, 0, 7);
+
+                this.sprite.SetLowerLeftPixel((float)(num2 * this.spritePixelWidth + frame * this.spritePixelWidth), (float)(num * this.spritePixelHeight));
+                this.avatarGunFireTime = 0.07f;
+                HeroController.SetAvatarAngry(base.playerNum, this.usePrimaryAvatar);
+                if (base.frame >= 7)
+                {
+                    base.frame = 0;
+                    this.CancelMelee();
+                }
             }
-
-            // End the melee attack when the last frame is reached
-            if (base.frame >= 20)
+            else
             {
-                base.frame = 0;
-                this.CancelMelee();
+                // Regular Melee Animation Logic
+                int num = 10;
+                int num2 = 11;
+                int frame = Mathf.Clamp(base.frame, 0, 20);
+
+                this.sprite.SetLowerLeftPixel((float)(num2 * this.spritePixelWidth + frame * this.spritePixelWidth), (float)(num * this.spritePixelHeight));
+
+                // Handle the projectile throw at the appropriate frame
+                if (base.frame == 18)
+                {
+                    this.ThrowProjectile();
+                }
+
+                // End the melee attack when the last frame is reached
+                if (base.frame >= 20)
+                {
+                    base.frame = 0;
+                    this.CancelMelee();
+                }
+                if (base.frame == 2 && this.nearbyMook != null && this.nearbyMook.CanBeThrown() && (this.highFive || this.standingMelee))
+                {
+                    this.CancelMelee();
+                    this.ThrowBackMook(this.nearbyMook);
+                    this.nearbyMook = null;
+                }
             }
         }
-        private void ThrowProjectile() //ne znam da li je ovo AnimateThrowingHeldObject() ili slicno ima dosta metoda u test van damme
+
+        private void ThrowProjectile()
         {
             CoorsCan Coorscan;
             if (this.down && this.IsOnGround() && this.ducking)
@@ -657,12 +795,36 @@ namespace Cobro
                 Coorscan = ProjectileController.SpawnGrenadeLocally(this.coorscanPrefab, this, base.X + Mathf.Sign(base.transform.localScale.x) * 6f, base.Y + 10f, 0.001f, 0.011f, Mathf.Sign(base.transform.localScale.x) * 300f, 250f, base.playerNum, 0) as CoorsCan;
             }
             Coorscan.enabled = true;
-           
         }
 
-        
 
+        protected override bool MustIgnoreHighFiveMeleePress()
+        {
+            return this.heldGrenade != null || this.heldMook != null || this.usingSpecial || this.usingSpecial2 || this.usingSpecial3 || this.usingSpecial4 || this.attachedToZipline || this.jumpingMelee || base.actionState == ActionState.Jumping || base.Y > this.groundHeight + 1f;
+        }
 
+        protected override void PerformKnifeMeleeAttack(bool shouldTryHitTerrain, bool playMissSound)
+        {
+            bool flag;
+
+            Map.DamageDoodads(3, DamageType.Knock, base.X + (float)(base.Direction * 4), base.Y, 0f, 0f, 6f, base.playerNum, out flag, null);
+            base.KickDoors(24f);
+            if (Map.HitClosestUnit(this, base.playerNum, 4, DamageType.Knock, 14f, 24f, base.X + base.transform.localScale.x * 8f, base.Y + 8f, base.transform.localScale.x * 200f, 500f, true, false, base.IsMine, false, true))
+            {
+                int randomIndex = UnityEngine.Random.Range(0, Cobro.DashingMeleeSounds.Length);
+                this.sound.PlaySoundEffectAt(Cobro.DashingMeleeSounds[randomIndex], 0.7f, base.transform.position, 1f, true, false, false, 0f);
+                this.meleeHasHit = true;
+            }
+            else if (playMissSound)
+            {
+                this.sound.PlaySoundEffectAt(this.soundHolder.missSounds, 0.7f, base.transform.position, 1f, true, false, false, 0f);
+            }
+            this.meleeChosenUnit = null;
+            if (shouldTryHitTerrain && this.TryMeleeTerrain(0, 2))
+            {
+                this.meleeHasHit = true;
+            }
+        }
         #endregion
 
 
