@@ -130,7 +130,6 @@ namespace Cobro
                 Cobro.DashingMeleeSounds = new AudioClip[2];
                 Cobro.DashingMeleeSounds[0] = ResourcesController.GetAudioClip(Path.Combine(directoryName, "sounds"), "CobroSmack.wav");
                 Cobro.DashingMeleeSounds[1] = ResourcesController.GetAudioClip(Path.Combine(directoryName, "sounds"), "CobroSmack2.wav");
-                Cobro.DashingMeleeSounds[2] = ResourcesController.GetAudioClip(Path.Combine(directoryName, "sounds"), "CobroTerrainHit.wav");
             }
             this.emptyGunSound = ResourcesController.GetAudioClip(Path.Combine(directoryName, "sounds"), "EmptyGun.wav"); 
 
