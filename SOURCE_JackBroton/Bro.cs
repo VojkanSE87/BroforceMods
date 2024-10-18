@@ -160,8 +160,8 @@ namespace JackBroton
             }
             else if (this.usingSpecial && this.doingMelee)
             {
-                // Handle the case where usingSpecial is true and doingMelee is true
-                // This could be a bug or a design decision, depending on the game mechanics
+              //
+              
             }
         }
 
@@ -274,15 +274,15 @@ namespace JackBroton
 
                 if (this.specialProjectileData.bulletCount < 2)
                 {
-                    // First two uses throw the BootKnife
+                   
                     this.ThrowProjectile();
                     this.specialProjectileData.bulletCount++;
                 }
                 else if (this.specialProjectileData.bulletCount == 2)
                 {
-                    // Third use activates invincibility mode
+                    
                     this.InvincibilityMode();
-                    this.specialProjectileData.bulletCount = 0; // Reset counter after third use
+                    this.specialProjectileData.bulletCount = 0; 
                 }
 
                 // Reduce Special Ammo
@@ -364,21 +364,21 @@ namespace JackBroton
         }
         private void InvincibilityMode()
         {
-            this.isUsingSecondSpecial = true; // Flag for invincibility special
-            this.invulnerable = true; // Activate invulnerability
-            this.normalMaterial.SetColor("_TintColor", Color.yellow); // Optional: change color to indicate invincibility
-            this.gunSprite.meshRender.material.SetColor("_TintColor", Color.yellow); // Change gun sprite color
+            this.isUsingSecondSpecial = true;
+            this.invulnerable = true; 
+            this.normalMaterial.SetColor("_TintColor", Color.yellow); 
+            this.gunSprite.meshRender.material.SetColor("_TintColor", Color.yellow);
 
-            // Set a timer or condition to exit invincibility mode after some time
+       
             StartCoroutine(EndInvincibilityMode());
         }
 
         private IEnumerator EndInvincibilityMode()
         {
-            yield return new WaitForSeconds(5.0f); // Example: Invincibility lasts 5 seconds
+            yield return new WaitForSeconds(5.0f); 
 
-            this.invulnerable = false; // Turn off invincibility
-            this.normalMaterial.SetColor("_TintColor", Color.gray); // Return to normal color
+            this.invulnerable = false; 
+            this.normalMaterial.SetColor("_TintColor", Color.gray); 
             this.gunSprite.meshRender.material.SetColor("_TintColor", Color.gray);
             this.isUsingSecondSpecial = false;
         }
