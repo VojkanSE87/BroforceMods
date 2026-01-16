@@ -1,4 +1,5 @@
-﻿using System;
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -378,6 +379,7 @@ namespace Cobro
             {
                 return;
             }
+            
             base.FireFlashAvatar();
         }
         
@@ -707,7 +709,7 @@ namespace Cobro
                 this.sound.PlaySoundEffectAt(this.soundHolder.missSounds, 0.7f, base.transform.position, 1f, true, false, false, 0f);
             }
             this.meleeChosenUnit = null;
-            if (shouldTryHitTerrain && this.TryMeleeTerrain(0, 2))
+            if (shouldTryHitTerrain && TryMeleeTerrain(0, 2))
             {
                 this.meleeHasHit = true;
             }

@@ -8,7 +8,7 @@ For more info on modding Broforce - I recommend [alexneargarder's Broforce moddi
 
 
 ## Cobro Mod
-More info about this mod and download link can be found here.
+More info about this mod and download link can be found [here](https://www.nexusmods.com/broforce/mods/47).
 
 ## Correct Rambro Mod
 More info about this mod and download link can be found here.
