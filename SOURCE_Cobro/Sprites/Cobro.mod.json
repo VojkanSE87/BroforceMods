@@ -1,6 +1,6 @@
 {
-  "Version": "1.0.0",
-  "BroMakerVersion": "2.3.0",
+  "Version": "1.0.3",
+  "BroMakerVersion": "2.5.0",
   "Name": "Cobro",
   "Author": "Vojkan",
   "CustomBros":[
