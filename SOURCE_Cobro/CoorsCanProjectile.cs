@@ -1,53 +1,64 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using BroMakerLib;
-using RocketLib.Collections;
-using Rogueforce;
 using UnityEngine;
-using Utility;
 
 namespace Cobro
 {
-    public class CoorsCan : Grenade
-    {
+
         public static Material storedMat;
+
         private Rigidbody rigidbody;
+
         private MonoBehaviour damageSender;
-        AudioClip explosionSound;                                      
+
+        private AudioClip explosionSound;
+
         public Vector3 centerOfMass = new Vector3(0f, -0.3f, 0f);
+
         private static bool bounceX;
+
         private static bool bounceY;
-        private bool hasCollided = false;
-        private float soundThreshold = 0.5f; 
-        private AudioClip[] canSounds;  
-        public AudioClip[] canRollSounds; 
+
+        private bool hasCollided;
+
+        private float soundThreshold = 0.5f;
+
+        private AudioClip[] canSounds;
+
+        public AudioClip[] canRollSounds;
+
         private AudioSource audioSource;
-        public float impactThreshold = 1f; 
-                                    
-        private float nextImpactSoundTime = 0f;
-        private float impactSoundCooldown = 0.5f; 
-        public float yMovementThreshold = 0.5f; 
-        private float timeSinceLastSound = 0f;
-        private Vector3 lastPosition; 
+
+        public float impactThreshold = 1f;
+
+        private float nextImpactSoundTime;
+
+        private float impactSoundCooldown = 0.5f;
+
+        public float yMovementThreshold = 0.5f;
+
+        private float timeSinceLastSound;
+
+        private Vector3 lastPosition;
+
         private Rigidbody rb;
+
         public LayerMask collisionLayers;
 
-        private float currentVolume = 1f; 
-        private float volumeReductionStep = 0.3f; 
+        private float currentVolume = 1f;
+
+        private float volumeReductionStep = 0.3f;
+
         private float minVolume = 0.2f;
-
-        private float nextSoundTime = 0f; 
-        private float soundCooldown = 0.5f; 
-
+    
+    public class CoorsCan : Grenade
+    {       
         protected override void Awake()
         {
             Renderer component = base.gameObject.GetComponent<MeshRenderer>();
             string directoryName = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                        
-
             if (CoorsCan.storedMat == null)
             {
                 CoorsCan.storedMat = ResourcesController.GetMaterial(directoryName, "CoorsCan.png");
@@ -56,38 +67,31 @@ namespace Cobro
             {
                 base.gameObject.AddComponent<BoxCollider>();
             }
-
-            this.canSounds = new AudioClip[] 
+            this.canSounds = new AudioClip[]
             {
                 ResourcesController.CreateAudioClip(Path.Combine(directoryName, "sounds"), "can1.wav"),
                 ResourcesController.CreateAudioClip(Path.Combine(directoryName, "sounds"), "can2.wav"),
                 ResourcesController.CreateAudioClip(Path.Combine(directoryName, "sounds"), "can3.wav"),
                 ResourcesController.CreateAudioClip(Path.Combine(directoryName, "sounds"), "can4.wav")
             };
-
-           
-
             component.material = CoorsCan.storedMat;
-
             this.sprite = base.gameObject.GetComponent<SpriteSM>();
             this.sprite.lowerLeftPixel = new Vector2(0f, 16f);
             this.sprite.pixelDimensions = new Vector2(16f, 16f);
-            this.sprite.plane = SpriteBase.SPRITE_PLANE.XY;
+            this.sprite.plane = 0;
             this.sprite.width = 18f;
             this.sprite.height = 22f;
-
             this.explosionSound = ResourcesController.CreateAudioClip(Path.Combine(directoryName, "sounds"), "emptyCan.wav");
             base.Awake();
-
-            this.audioSource = gameObject.AddComponent<AudioSource>(); 
-            this.audioSource.playOnAwake = false;                      
-            this.audioSource.loop = false;                             
+            this.audioSource = base.gameObject.AddComponent<AudioSource>();
+            this.audioSource.playOnAwake = false;
+            this.audioSource.loop = false;
             this.fragileLayer = 1 << LayerMask.NameToLayer("DirtyHippie");
-            this.trailRenderer = null;            
+            this.trailRenderer = null;
             this.bounceM = 0.2f;
             this.disabledAtStart = false;
             this.shrink = false;
-            this.trailType = TrailType.None;
+            this.trailType = 0;
             this.lifeLossOnBounce = false;
             this.deathOnBounce = false;
             this.destroyInsideWalls = false;
@@ -96,16 +100,20 @@ namespace Cobro
             this.fadeUVs = false;
             this.useAngularFriction = true;
             this.shrapnelControlsMotion = false;
-            collisionLayers = LayerMask.GetMask("Ground", "DirtyHippie", "Switches"); 
+            this.collisionLayers = LayerMask.GetMask(new string[]
+            {
+                "Ground",
+                "DirtyHippie",
+                "Switches"
+            });
         }
-      
+
         protected override void Start()
         {
             this.mainMaterial = base.GetComponent<Renderer>().sharedMaterial;
             base.Start();
-            this.groundLayer = Map.groundLayer;           
-            bool hit = Physics.CheckSphere(transform.position, collisionLayers);
-
+            this.groundLayer = Map.groundLayer;
+            Physics.CheckSphere(base.transform.position, (float)this.collisionLayers);
             this.RegisterGrenade();
             if (this.disabledAtStart)
             {
@@ -114,11 +122,11 @@ namespace Cobro
                 this.r = 0f;
                 base.enabled = false;
             }
-            audioSource = GetComponent<AudioSource>();
-            lastPosition = transform.position;
+            this.audioSource = base.GetComponent<AudioSource>();
+            this.lastPosition = base.transform.position;
         }
 
-        protected new virtual void RegisterGrenade()
+        protected virtual void RegisterGrenade()
         {
             if (this.shootable)
             {
@@ -146,19 +154,19 @@ namespace Cobro
             this.rigidbody.position = new Vector3(newX, newY);
             if (Mathf.Abs(this.xI) > 100f)
             {
-                this.rI = -Mathf.Sign(this.xI) * (float)UnityEngine.Random.Range(20, 25);
+                this.rI = -Mathf.Sign(this.xI) * (float)Random.Range(20, 25);
             }
             else
             {
-                this.rI = -Mathf.Sign(this.xI) * (float)UnityEngine.Random.Range(10, 15);
+                this.rI = -Mathf.Sign(this.xI) * (float)Random.Range(10, 15);
             }
-            this.rigidbody.AddForce(new Vector3(this.xI, this.yI, 0f), ForceMode.VelocityChange);
-            this.rigidbody.AddTorque(new Vector3(0f, 0f, this.rI), ForceMode.VelocityChange);
+            this.rigidbody.AddForce(new Vector3(this.xI, this.yI, 0f), 2);
+            this.rigidbody.AddTorque(new Vector3(0f, 0f, this.rI), 2);
             base.SetMinLife(0.7f);
         }
 
         public override void Launch(float newX, float newY, float xI, float yI)
-        {            
+        {
             if (this == null)
             {
                 return;
@@ -178,11 +186,11 @@ namespace Cobro
             this.spriteHeightI = -this.spriteHeight / this.life * 1f;
             if (Mathf.Abs(xI) > 100f)
             {
-                this.rI = -Mathf.Sign(xI) * (float)UnityEngine.Random.Range(20, 25);
+                this.rI = -Mathf.Sign(xI) * (float)Random.Range(20, 25);
             }
             else
             {
-                this.rI = -Mathf.Sign(xI) * (float)UnityEngine.Random.Range(10, 15);
+                this.rI = -Mathf.Sign(xI) * (float)Random.Range(10, 15);
             }
             this.SetPosition();
             if (!this.shrapnelControlsMotion && base.GetComponent<Rigidbody>() == null)
@@ -194,10 +202,10 @@ namespace Cobro
                 }
                 boxCollider.size = new Vector3(9f, 3f, 5f);
                 this.rigidbody = base.gameObject.AddComponent<Rigidbody>();
-                this.rigidbody.AddForce(new Vector3(xI, yI, 0f), ForceMode.VelocityChange);
-                this.rigidbody.constraints = (RigidbodyConstraints)56;
+                this.rigidbody.AddForce(new Vector3(xI, yI, 0f), 2);
+                this.rigidbody.constraints = 56;
                 this.rigidbody.maxAngularVelocity = float.MaxValue;
-                this.rigidbody.AddTorque(new Vector3(0f, 0f, this.rI), ForceMode.VelocityChange);
+                this.rigidbody.AddTorque(new Vector3(0f, 0f, this.rI), 2);
                 this.rigidbody.drag = 0.8f;
                 this.rigidbody.angularDrag = 0.7f;
                 this.rigidbody.mass = 230f;
@@ -267,78 +275,74 @@ namespace Cobro
             }
             this.SetPosition();
             this.sprite.offset = new Vector3(0f, -0.5f, 0f);
-            currentVolume = 1f;
+            this.currentVolume = 1f;
         }
 
-        
-        private void OnCollisionEnter(Collision collision) 
+        private void OnCollisionEnter(Collision collision)
         {
-            if (!hasCollided && (collisionLayers.value & (1 << collision.gameObject.layer)) != 0)
+            if (!this.hasCollided && (this.collisionLayers.value & 1 << collision.gameObject.layer) != 0 && Mathf.Abs(this.xI) > 1f)
             {
-                if (Mathf.Abs(this.xI) > 1f)
-                {
-                    PlayRandomCanSound(); 
-                    hasCollided = true; 
-                }
+                this.PlayRandomCanSound();
+                this.hasCollided = true;
             }
         }
-
 
         protected override bool Update()
         {
-            bool retVal = base.Update();
-
-            base.X = rigidbody.position.x;
-            base.Y = rigidbody.position.y;
-
-            Collider[] hitColliders = Physics.OverlapSphere(rigidbody.position, 0.5f); 
-            foreach (var hitCollider in hitColliders)
+            bool result = base.Update();
+            base.X = this.rigidbody.position.x;
+            base.Y = this.rigidbody.position.y;
+            Collider[] array = Physics.OverlapSphere(this.rigidbody.position, 0.5f);
+            int i = 0;
+            while (i < array.Length)
             {
-                if (hitCollider.gameObject != this.gameObject)
+                Collider collider = array[i];
+                if (collider.gameObject != base.gameObject)
                 {
-                    hasCollided = true;
-
-                    int layer = hitCollider.gameObject.layer;
-                    if (((1 << layer) & collisionLayers) != 0 && Mathf.Abs(xI) > 1f && Time.time >= nextImpactSoundTime)
+                    this.hasCollided = true;
+                    int layer = collider.gameObject.layer;
+                    if ((1 << layer & this.collisionLayers) != 0 && Mathf.Abs(this.xI) > 1f && Time.time >= this.nextImpactSoundTime)
                     {
-                        PlayImpactSound();
-                        nextImpactSoundTime = Time.time + impactSoundCooldown; 
+                        this.PlayImpactSound();
+                        this.nextImpactSoundTime = Time.time + this.impactSoundCooldown;
+                        break;
                     }
-
                     break;
                 }
+                else
+                {
+                    i++;
+                }
             }
-
-            if (hasCollided)
+            if (this.hasCollided)
             {
                 Map.AttractMooks(base.X, base.Y, 200f, 100f);
                 Map.AttractAliens(base.X, base.Y, 200f, 100f);
-                HitAllLivingUnits(this, playerNum, 0, DamageType.None, 20f, 10f, base.X, base.Y, xI, yI, false, true);
-                hasCollided = false; 
+                CoorsCan.HitAllLivingUnits(this, this.playerNum, 0, 23, 20f, 10f, base.X, base.Y, this.xI, this.yI, false, true);
+                this.hasCollided = false;
             }
-            if (Mathf.Abs(yI) < 0.1f && Mathf.Abs(xI) > 0.1f) 
+            if (Mathf.Abs(this.yI) < 0.1f && Mathf.Abs(this.xI) > 0.1f)
             {
-                PlayRollingSound();
+                this.PlayRollingSound();
             }
-
-            return retVal;
+            return result;
         }
 
         private void PlayRollingSound()
         {
-            if (canRollSounds.Length > 0)
+            if (this.canRollSounds.Length != 0)
             {
-                AudioClip rollClip = canRollSounds[UnityEngine.Random.Range(0, canRollSounds.Length)];
-                audioSource.PlayOneShot(rollClip);
+                AudioClip audioClip = this.canRollSounds[Random.Range(0, this.canRollSounds.Length)];
+                this.audioSource.PlayOneShot(audioClip);
             }
         }
 
         private void PlayImpactSound()
         {
-            if (canSounds.Length > 0)
+            if (this.canSounds.Length != 0)
             {
-                AudioClip impactClip = canSounds[UnityEngine.Random.Range(0, canSounds.Length)];
-                audioSource.PlayOneShot(impactClip);
+                AudioClip audioClip = this.canSounds[Random.Range(0, this.canSounds.Length)];
+                this.audioSource.PlayOneShot(audioClip);
             }
         }
 
@@ -359,33 +363,33 @@ namespace Cobro
                     float num2 = 0f;
                     switch (unit.GetMookType())
                     {
-                        case MookType.Trooper:
-                        case MookType.Suicide:
-                        case MookType.Scout:
-                        case MookType.RiotShield:
-                        case MookType.Grenadier:
-                        case MookType.Villager:
-                        case MookType.UndeadTrooper:
-                        case MookType.UndeadSuicide:
-                            num = unit.Y + unit.height * 0.78f;
-                            num2 = unit.height * 0.22f;
-                            break;
-                        case MookType.BigGuy:
-                        case MookType.Melter:
-                        case MookType.Boomer:
-                        case MookType.HellBigGuy:
-                            num = unit.Y + unit.height * 0.8f;
-                            num2 = unit.height * 0.2f;
-                            break;
-                        case MookType.Dog:
-                        case MookType.Alien:
-                        case MookType.FaceHugger:
-                        case MookType.HellDog:
-                        case MookType.ArmouredGuy:
-                        case MookType.General:
-                            num = unit.Y + unit.height * 0.74f;
-                            num2 = unit.height * 0.26f;
-                            break;
+                    case 0:
+                    case 1:
+                    case 4:
+                    case 7:
+                    case 9:
+                    case 10:
+                    case 15:
+                    case 16:
+                        num = unit.Y + unit.height * 0.78f;
+                        num2 = unit.height * 0.22f;
+                        break;
+                    case 2:
+                    case 14:
+                    case 18:
+                    case 20:
+                        num = unit.Y + unit.height * 0.8f;
+                        num2 = unit.height * 0.2f;
+                        break;
+                    case 5:
+                    case 8:
+                    case 11:
+                    case 13:
+                    case 19:
+                    case 21:
+                        num = unit.Y + unit.height * 0.74f;
+                        num2 = unit.height * 0.26f;
+                        break;
                     }
                     if (Mathf.Abs(num - y) < num2)
                     {
@@ -396,17 +400,17 @@ namespace Cobro
                         }
                     }
                 }
-
             }
             return result;
         }
+
         private void PlayRandomCanSound()
         {
-            int randomIndex = UnityEngine.Random.Range(0, canSounds.Length);
-            audioSource.clip = canSounds[randomIndex];
-            audioSource.volume = currentVolume;
-            audioSource.Play();
-            currentVolume = Mathf.Max(currentVolume - volumeReductionStep, minVolume);
+            int num = Random.Range(0, this.canSounds.Length);
+            this.audioSource.clip = this.canSounds[num];
+            this.audioSource.volume = this.currentVolume;
+            this.audioSource.Play();
+            this.currentVolume = Mathf.Max(this.currentVolume - this.volumeReductionStep, this.minVolume);
         }
 
         public override void Death()
@@ -425,17 +429,14 @@ namespace Cobro
         protected override void RunWarnings()
         {
         }
-        
+
         protected override void MakeEffects()
         {
             if (this.sound == null)
             {
                 this.sound = Sound.GetInstance();
             }
-            if (this.sound != null)
-            {
-                //this.sound.PlaySoundEffectAt(this.explosionSound, 0.4f, base.transform.position, 1f, true, false, false, 0f);
-            }
+            this.sound != null;
         }
     }
 }
