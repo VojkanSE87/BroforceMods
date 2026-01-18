@@ -3,97 +3,94 @@ using System.IO;
 using System.Reflection;
 using BroMakerLib;
 using UnityEngine;
+using UnityEngine.SocialPlatforms;
 
 namespace JackBroton
 {
-    internal class BootKnife : Projectile
+    class BootKnife : Projectile
     {
         public static Material storedMat;
-
         private SpriteSM storedSprite;
 
         public bool hitDeadUnits = true;
-
         protected float waistHeight = 10f;
-
         public bool penetrateWalls;
-
         public int maxPenetrations = 19;
-
         public int maxWallPenetrations = 14;
-
         protected int penetrateCount;
-
         private int wallPenetrateCount;
-
         private bool hasHitWithWall;
-
         private bool attackHasHit;
 
-            protected override void Awake()
+        protected override void Awake()
         {
             base.Awake();
-            Rigidbody component = base.GetComponent<Rigidbody>();
-            bool flag = component != null;
-            if (flag)
+            Rigidbody rb = this.GetComponent<Rigidbody>();
+            if (rb != null)
             {
-                component.collisionDetectionMode = 1;
+                rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
             }
-            MeshRenderer component2 = base.gameObject.GetComponent<MeshRenderer>();
-            bool flag2 = BootKnife.storedMat == null;
-            if (flag2)
+            MeshRenderer renderer = this.gameObject.GetComponent<MeshRenderer>();
+
+            if (storedMat == null)
             {
-                string directoryName = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                BootKnife.storedMat = ResourcesController.GetMaterial(directoryName, "BootKnife.png");
+                string directoryPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                storedMat = ResourcesController.GetMaterial(directoryPath, "BootKnife.png");
             }
-            component2.material = BootKnife.storedMat;
-            SpriteSM component3 = base.gameObject.GetComponent<SpriteSM>();
-            component3.lowerLeftPixel = new Vector2(0f, 16f);
-            component3.pixelDimensions = new Vector2(34f, 16f);
-            component3.plane = 0;
-            component3.width = 23f;
-            component3.height = 11f;
-            component3.offset = Vector3.zero;
-            this.storedSprite = component3;
-            this.damageType = 3;
+            renderer.material = storedMat;
+
+            SpriteSM sprite = this.gameObject.GetComponent<SpriteSM>();
+            sprite.lowerLeftPixel = new Vector2(0, 16);
+            sprite.pixelDimensions = new Vector2(34, 16);
+            sprite.plane = SpriteBase.SPRITE_PLANE.XY;
+            sprite.width = 23;
+            sprite.height = 11;
+            sprite.offset = Vector3.zero;
+
+            storedSprite = sprite;
+
+            this.damageType = DamageType.Normal;
             this.damage = 8;
             this.damageInternal = this.damage;
             this.fullDamage = this.damage;
-            this.life = 9f;
+            this.life = 9f; 
         }
 
         protected override void Update()
-        {
-            this.DeflectEnemyProjectiles();
+        { 
+           
+            this.DeflectEnemyProjectiles();  
             this.life -= Time.deltaTime;
-            bool flag = this.life <= 0f;
-            if (flag)
+            if (this.life <= 0f)
             {
-                this.DeregisterProjectile();
-                Object.Destroy(base.gameObject);
+                DeregisterProjectile();
+                Destroy(this.gameObject);
+                return;
             }
-            else
-            {
-                this.SetPosition(base.X + this.xI * Time.deltaTime, base.Y + this.yI * Time.deltaTime);
-                this.HitUnits();
-                Map.DisturbWildLife(base.X, base.Y, 60f, this.playerNum);
-                Map.HurtWildLife(base.X, base.Y, this.projectileSize / 2f);
-                Map.ShakeTrees(base.X, base.Y, 24f, 20f, 60f);
-                Map.DisturbAlienEggs(base.X, base.Y, this.playerNum);
-                Map.JiggleDoodads(base.X, base.Y, 24f, 16f, 60f);
-                float num = 0f;
-                float num2 = 0f;
-                Map.HitGrenades(this.playerNum, 12f, base.X, base.Y, this.xI, this.yI, ref num, ref num2);
-            }
+            this.SetPosition(base.X + this.xI * Time.deltaTime, base.Y + this.yI * Time.deltaTime);
+            this.HitUnits();
+            Map.DisturbWildLife(base.X, base.Y, 60f, base.playerNum);
+           
+            Map.HurtWildLife(base.X, base.Y, this.projectileSize / 2f);
+            Map.ShakeTrees(base.X, base.Y, 24f, 20f, 60f);
+            Map.DisturbAlienEggs(base.X, base.Y, base.playerNum);
+            Map.JiggleDoodads(base.X, base.Y, 24f, 16f, 60f);
+            float grenadeX = 0f;
+            float grenadeY = 0f;
+            Map.HitGrenades(base.playerNum, 12f, base.X, base.Y, base.xI, base.yI, ref grenadeX, ref grenadeY);
+
         }
 
         public override void Fire(float newX, float newY, float xI, float yI, float _zOffset, int playerNum, MonoBehaviour FiredBy)
         {
-            float num = 19f * Mathf.Sign(xI);
-            newX += num;
+            float offset = 19f * Mathf.Sign(xI);
+            newX += offset;
             newY += 13f;
+
             xI *= 22f;
-            base.Fire(newX, newY, xI, yI, _zOffset, playerNum, FiredBy);
+
+            base.Fire(newX, newY, xI, yI, _zOffset, playerNum, FiredBy);            
+
         }
 
         private void SetPosition(float newX, float newY)
@@ -105,13 +102,21 @@ namespace JackBroton
 
         protected void DeflectEnemyProjectiles()
         {
-            float num = 16f;
-            float num2 = base.X + Mathf.Sign(this.xI) * 6f;
-            float num3 = base.Y + 6f;
-            float num4 = Mathf.Sign(this.xI) * 200f;
-            bool flag = true;
-            bool flag2 = Map.DeflectProjectiles(this, this.playerNum, num, num2, num3, num4, flag);
-            if (flag2)
+            float range = 16f;
+            float originX = base.X + Mathf.Sign(this.xI) * 6f;
+            float originY = base.Y + 6f;
+            float reflectedVelocityX = Mathf.Sign(this.xI) * 200f;
+            bool giveDeflectAchievement = true;
+                        
+            if (Map.DeflectProjectiles(
+                    this,
+                    base.playerNum,
+                    range,
+                    originX,
+                    originY,
+                    reflectedVelocityX,
+                    giveDeflectAchievement
+                ))
             {
                 this.hasHitWithWall = true;
             }
@@ -121,127 +126,140 @@ namespace JackBroton
         {
             float x = base.X;
             float y = base.Y;
-            Vector3 vector = (this.xI > 0f) ? Vector3.right : Vector3.left;
-            float num = Mathf.Abs(this.xI * Time.deltaTime + this.projectileSize);
-            bool flag = Physics.Raycast(new Vector3(x, y, 0f), vector, ref this.raycastHit, num, 1 << LayerMask.NameToLayer("Ground") | 1 << LayerMask.NameToLayer("IndestructibleGround") | 1 << LayerMask.NameToLayer("Parachute") | 1 << LayerMask.NameToLayer("LargeObjects"));
-            if (flag)
+            
+            Vector3 direction = this.xI > 0 ? Vector3.right : Vector3.left;
+            float rayLength = Mathf.Abs(this.xI * Time.deltaTime + this.projectileSize);
+
+            if (Physics.Raycast(new Vector3(x, y, 0f), direction, out this.raycastHit, rayLength, 1 << LayerMask.NameToLayer("Ground") | 1 << LayerMask.NameToLayer("IndestructibleGround") | 1 << LayerMask.NameToLayer("Parachute") | 1<< LayerMask.NameToLayer("LargeObjects")))
             {
-                MapController.DamageGround(this, 2, 8, 10f, this.raycastHit.point.x, this.raycastHit.point.y, null, true);
+                MapController.DamageGround(this, 2, DamageType.Chainsaw, 10f, this.raycastHit.point.x, this.raycastHit.point.y, null, true);
+
                 this.penetrateCount++;
-                bool flag2 = this.penetrateCount >= this.maxPenetrations;
-                if (flag2)
+                if (this.penetrateCount >= this.maxPenetrations)
                 {
                     this.DeregisterProjectile();
-                    Object.Destroy(base.gameObject);
+                    Destroy(this.gameObject);
                     return;
                 }
-                bool flag3 = this.raycastHit.collider.gameObject.layer == 30;
-                if (flag3)
+                if (this.raycastHit.collider.gameObject.layer == 30)
                 {
-                    this.raycastHit.collider.gameObject.SendMessage("Damage", new DamageObject(60, 3, this.xI, this.yI, this.raycastHit.point.x, this.raycastHit.point.y, this));
+                    this.raycastHit.collider.gameObject.SendMessage("Damage", new DamageObject(60, DamageType.Normal, this.xI, this.yI, this.raycastHit.point.x, this.raycastHit.point.y, this));
+
                     this.MakeEffects(true, base.X, base.Y, false, this.raycastHit.normal, this.raycastHit.point);
+
                     this.DeregisterProjectile();
-                    Object.Destroy(base.gameObject);
+                    Destroy(this.gameObject);
                     return;
+
                 }
-                this.raycastHit.collider.gameObject.SendMessage("Damage", new DamageObject(2, 8, this.xI, this.yI, this.raycastHit.point.x, this.raycastHit.point.y, this));
+                this.raycastHit.collider.gameObject.SendMessage("Damage", new DamageObject( 2, DamageType.Chainsaw, this.xI, this.yI, this.raycastHit.point.x, this.raycastHit.point.y, this)
+                );
             }
-            bool flag4 = Map.HitLivingUnits(this, this.playerNum, this.damageInternal, this.damageType, this.projectileSize, this.projectileSize / 2f, x, y, this.xI, this.yI, true, true, true, true);
-            bool flag5 = flag4;
-            if (flag5)
+
+            bool hitLiving = Map.HitLivingUnits(
+                this,                     
+                this.playerNum,           
+                this.damageInternal,      
+                this.damageType,          
+                this.projectileSize,      
+                this.projectileSize / 2f, 
+                x,                        
+                y,                       
+                this.xI,                 
+                this.yI,                 
+                true,   // allow penetrating multiple living units
+                true,   // apply knockback to living units
+                true,   // play hit effects (sparks, blood, etc.)
+                true    // allow splash damage to nearby units
+            );
+
+            if (hitLiving)
             {
                 this.penetrateCount++;
-                bool flag6 = this.penetrateCount >= this.maxPenetrations;
-                if (flag6)
+                if (this.penetrateCount >= this.maxPenetrations)
                 {
-                    this.DeregisterProjectile();
-                    Object.Destroy(base.gameObject);
+                    DeregisterProjectile();
+                    Destroy(this.gameObject);
+                    return; 
                 }
+                return;
             }
-            else
+
+            JackBroton jack = this.firedBy as JackBroton;
+            if (jack != null && jack.hitDeadUnits)
             {
-                JackBroton jackBroton = this.firedBy as JackBroton;
-                bool flag7 = jackBroton != null && jackBroton.hitDeadUnits;
-                if (flag7)
+                bool didHitDead = Map.HitDeadUnits( this, 2, DamageType.Chainsaw, this.projectileSize, x, y, xI, yI, false, true);
+                if (didHitDead)
                 {
-                    bool flag8 = Map.HitDeadUnits(this, 2, 8, this.projectileSize, x, y, this.xI, this.yI, false, true);
-                    bool flag9 = flag8;
-                    if (flag9)
+                    penetrateCount++;
+                    if (penetrateCount >= maxPenetrations)
                     {
-                        this.penetrateCount++;
-                        bool flag10 = this.penetrateCount >= this.maxPenetrations;
-                        if (flag10)
-                        {
-                            this.DeregisterProjectile();
-                            Object.Destroy(base.gameObject);
-                            return;
-                        }
+                        DeregisterProjectile();
+                        Destroy(this.gameObject);
                         return;
                     }
+                    return; 
                 }
-                bool flag12;
-                bool flag11 = BootKnife.DamageDoodads(this.damage, this.damageType, x, y, this.xI, this.yI, 5f, this.playerNum, out flag12, null);
-                if (flag11)
+            }
+            bool hitImpenetrableDoodad;
+            if (DamageDoodads(
+                    this.damage,    
+                    this.damageType,
+                    x, y,
+                    this.xI, this.yI,
+                    5f,               
+                    this.playerNum,
+                    out hitImpenetrableDoodad
+                ))
+            {
+                if (hitImpenetrableDoodad)
                 {
-                    bool flag13 = flag12;
-                    if (flag13)
-                    {
-                        this.DeregisterProjectile();
-                        Object.Destroy(base.gameObject);
-                    }
+                    DeregisterProjectile();
+                    Destroy(this.gameObject);
                 }
             }
         }
 
         protected override void TryHitUnitsAtSpawn()
         {
-            bool flag = this.hitDeadUnits;
-            if (flag)
+            if (this.hitDeadUnits)
             {
                 base.TryHitUnitsAtSpawn();
             }
-            else
+            else if (Map.HitLivingUnits(this.firedBy, this.playerNum, this.damageInternal * 2, this.damageType, (this.playerNum < 0) ? 0f : (this.projectileSize * 0.5f), base.X - ((this.playerNum < 0) ? 0f : (this.projectileSize * 0.5f)) * (float)((int)Mathf.Sign(this.xI)), base.Y, this.xI, this.yI, false, false, true, false))
             {
-                bool flag2 = Map.HitLivingUnits(this.firedBy, this.playerNum, this.damageInternal * 2, this.damageType, (this.playerNum < 0) ? 0f : (this.projectileSize * 0.5f), base.X - ((this.playerNum < 0) ? 0f : (this.projectileSize * 0.5f)) * (float)((int)Mathf.Sign(this.xI)), base.Y, this.xI, this.yI, false, false, true, false);
-                if (flag2)
-                {
-                    this.MakeEffects(false, base.X, base.Y, false, this.raycastHit.normal, this.raycastHit.point);
-                    Object.Destroy(base.gameObject);
-                    this.hasHit = true;
-                }
+                this.MakeEffects(false, base.X, base.Y, false, this.raycastHit.normal, this.raycastHit.point);
+                UnityEngine.Object.Destroy(base.gameObject);
+                this.hasHit = true;
             }
         }
 
         protected void KickDoors(float range)
         {
-            bool flag = Physics.Raycast(new Vector3(base.X - 6f * base.transform.localScale.x, base.Y + this.waistHeight, 0f), new Vector3(base.transform.localScale.x, 1f, 1f), ref this.raycastHit, 6f + range, this.fragileLayer) && this.raycastHit.collider.gameObject.GetComponent<Parachute>() == null;
-            if (flag)
+            if (Physics.Raycast(new Vector3(base.X - 6f * base.transform.localScale.x, base.Y + waistHeight, 0f), new Vector3(base.transform.localScale.x, 1f, 1f), out raycastHit, 6f + range, fragileLayer) && raycastHit.collider.gameObject.GetComponent<Parachute>() == null)
             {
-                this.raycastHit.collider.gameObject.SendMessage("Open", (int)base.transform.localScale.x);
-                MapController.Damage_Networked(this, this.raycastHit.collider.gameObject, 1, 4, base.transform.localScale.x * 500f, 50f, base.X, base.Y);
+                raycastHit.collider.gameObject.SendMessage("Open", (int)base.transform.localScale.x);
+                MapController.Damage_Networked(this, raycastHit.collider.gameObject, 1, DamageType.Crush, base.transform.localScale.x * 500f, 50f, base.X, base.Y);
             }
         }
-
         protected override void Bounce(RaycastHit raycastHit)
         {
-            this.MakeEffects(true, raycastHit.point.x + raycastHit.normal.x * 3f, raycastHit.point.y + raycastHit.normal.y * 3f, true, raycastHit.normal, raycastHit.point);
-            this.ProjectileApplyDamageToBlock(raycastHit.collider.gameObject, this.damageInternal, this.damageType, this.xI, this.yI);
-            bool flag = this.penetrateWalls && this.wallPenetrateCount < this.maxWallPenetrations;
-            if (flag)
-            {
-                this.wallPenetrateCount++;
-            }
-            else
-            {
-                this.DeregisterProjectile();
-                Object.Destroy(base.gameObject);
-            }
-        }
+            MakeEffects(true, raycastHit.point.x + raycastHit.normal.x * 3f, raycastHit.point.y + raycastHit.normal.y * 3f, true, raycastHit.normal, raycastHit.point);
+    ProjectileApplyDamageToBlock(raycastHit.collider.gameObject, this.damageInternal, this.damageType, this.xI, this.yI);
 
+    if (penetrateWalls && wallPenetrateCount < maxWallPenetrations)
+    {
+        wallPenetrateCount++;
+    }
+    else
+    {
+        DeregisterProjectile();
+        Destroy(base.gameObject);
+    }
+}
         protected override void HitProjectiles()
         {
-            bool flag = Map.HitProjectiles(this.playerNum, this.damageInternal, this.damageType, this.projectileSize, base.X, base.Y, this.xI, this.yI, 0.1f);
-            if (flag)
+            if (Map.HitProjectiles(this.playerNum, this.damageInternal, this.damageType, this.projectileSize, base.X, base.Y, this.xI, this.yI, 0.1f))
             {
                 this.MakeEffects(false, base.X, base.Y, false, this.raycastHit.normal, this.raycastHit.point);
             }
@@ -253,11 +271,9 @@ namespace JackBroton
             for (int i = Map.staticDoodads.Count - 1; i >= 0; i--)
             {
                 Doodad doodad = Map.staticDoodads[i];
-                bool flag = !(doodad == null);
-                if (flag)
+                if (!(doodad == null))
                 {
-                    bool flag2 = doodad.IsPointInRange(x, y, range);
-                    if (flag2)
+                    if (doodad.IsPointInRange(x, y, range))
                     {
                         result = true;
                         doodad.Collapse();
@@ -274,23 +290,18 @@ namespace JackBroton
             for (int i = Map.destroyableDoodads.Count - 1; i >= 0; i--)
             {
                 Doodad doodad = Map.destroyableDoodads[i];
-                bool flag = !(doodad == null) && (playerNum >= 0 || doodad.CanBeDamagedByMooks);
-                if (flag)
+                if (!(doodad == null) && (playerNum >= 0 || doodad.CanBeDamagedByMooks))
                 {
-                    bool flag2 = playerNum < 0 || !doodad.immuneToHeroDamage;
-                    if (flag2)
+                    if (playerNum < 0 || !doodad.immuneToHeroDamage)
                     {
-                        bool flag3 = doodad.IsPointInRange(x, y, range);
-                        if (flag3)
+                        if (doodad.IsPointInRange(x, y, range))
                         {
-                            bool flag4 = false;
-                            doodad.DamageOptional(new DamageObject(damage, damageType, xI, yI, x, y, sender), ref flag4);
-                            bool flag5 = flag4;
-                            if (flag5)
+                            bool flag = false;
+                            doodad.DamageOptional(new DamageObject(damage, damageType, xI, yI, x, y, sender), ref flag);
+                            if (flag)
                             {
                                 result = true;
-                                bool isImpenetrable = doodad.isImpenetrable;
-                                if (isImpenetrable)
+                                if (doodad.isImpenetrable)
                                 {
                                     hitImpenetrableDoodad = true;
                                 }
@@ -300,7 +311,8 @@ namespace JackBroton
                 }
             }
             return result;
-        }
+        }         
+
 
         public static void DamageBlock(MonoBehaviour damageSender, Block b, int damage, DamageType damageType, float forceX, float forceY)
         {
@@ -311,72 +323,82 @@ namespace JackBroton
         {
             Collider[] array = Physics.OverlapSphere(new Vector3(base.X, base.Y, 0f), 5f, this.groundLayer);
             bool flag = false;
-            bool flag2 = array.Length != 0;
-            if (flag2)
+            if (array.Length > 0)
             {
                 for (int i = 0; i < array.Length; i++)
                 {
-                    Collider collider = null;
-                    bool flag3 = this.firedBy != null;
-                    if (flag3)
+                    Collider y = null;
+                    if (this.firedBy != null)
                     {
-                        collider = this.firedBy.GetComponent<Collider>();
+                        y = this.firedBy.GetComponent<Collider>();
                     }
-                    bool flag4 = this.firedBy == null || array[i] != collider;
-                    if (flag4)
+                    if (this.firedBy == null || array[i] != y)
                     {
                         this.ProjectileApplyDamageToBlock(array[i].gameObject, this.damageInternal, this.damageType, this.xI, this.yI);
                         flag = true;
                     }
                 }
-                bool flag5 = flag;
-                if (flag5)
+
+                if (flag)
                 {
                     this.MakeEffects(false, base.X, base.Y, false, this.raycastHit.normal, this.raycastHit.point);
                     this.hasHit = true;
+                    // Do NOT destroy the projectile
                 }
             }
             return flag;
         }
-
         protected override void CheckSpawnPoint()
         {
             bool flag = this.CheckWallsAtSpawnPoint();
-            Debug.DrawRay(new Vector3(base.X, base.Y, 0f), Random.onUnitSphere * 5f, Color.cyan, 10f);
+            Debug.DrawRay(new Vector3(base.X, base.Y, 0f), UnityEngine.Random.onUnitSphere * 5f, Color.cyan, 10f);
             bool flag2;
-            Map.DamageDoodads(this.damageInternal, this.damageType, base.X, base.Y, this.xI, this.yI, this.projectileSize, this.playerNum, ref flag2, this);
-            bool flag3 = !flag;
-            if (flag3)
+            Map.DamageDoodads(this.damageInternal, this.damageType, base.X, base.Y, this.xI, this.yI, this.projectileSize, this.playerNum, out flag2, this);
+                        
+            // if (flag2)
+            // {
+            //     UnityEngine.Object.Destroy(base.gameObject);
+            // }
+
+            if (!flag)
             {
                 this.RegisterProjectile();
             }
+
             this.CheckReturnZones();
-            bool flag4 = (this.canReflect && this.playerNum >= 0 && this.horizontalProjectile && Physics.Raycast(new Vector3(base.X - Mathf.Sign(this.xI) * this.projectileSize * 2f, base.Y, 0f), new Vector3(this.xI, this.yI, 0f), ref this.raycastHit, this.projectileSize * 3f, this.barrierLayer)) || (!this.horizontalProjectile && Physics.Raycast(new Vector3(base.X, base.Y, 0f), new Vector3(this.xI, this.yI, 0f), ref this.raycastHit, this.projectileSize + this.startProjectileSpeed * this.t, this.barrierLayer));
-            if (flag4)
+                        
+            if ((this.canReflect && this.playerNum >= 0 && this.horizontalProjectile &&
+                 Physics.Raycast(new Vector3(base.X - Mathf.Sign(this.xI) * this.projectileSize * 2f, base.Y, 0f),
+                 new Vector3(this.xI, this.yI, 0f), out this.raycastHit, this.projectileSize * 3f, this.barrierLayer)) ||
+                (!this.horizontalProjectile &&
+                 Physics.Raycast(new Vector3(base.X, base.Y, 0f), new Vector3(this.xI, this.yI, 0f), out this.raycastHit,
+                 this.projectileSize + this.startProjectileSpeed * this.t, this.barrierLayer)))
             {
+                this.ReflectProjectile(this.raycastHit);
+            }
+            else if ((this.canReflect && this.playerNum < 0 && this.horizontalProjectile &&
+                      Physics.Raycast(new Vector3(base.X - Mathf.Sign(this.xI) * this.projectileSize * 2f, base.Y, 0f),
+                      new Vector3(this.xI, this.yI, 0f), out this.raycastHit, this.projectileSize * 3f, this.friendlyBarrierLayer)) ||
+                     (!this.horizontalProjectile &&
+                      Physics.Raycast(new Vector3(base.X, base.Y, 0f), new Vector3(this.xI, this.yI, 0f), out this.raycastHit,
+                      this.projectileSize + this.startProjectileSpeed * this.t, this.friendlyBarrierLayer)))
+            {
+                this.playerNum = 5;
+                this.firedBy = null;
                 this.ReflectProjectile(this.raycastHit);
             }
             else
             {
-                bool flag5 = (this.canReflect && this.playerNum < 0 && this.horizontalProjectile && Physics.Raycast(new Vector3(base.X - Mathf.Sign(this.xI) * this.projectileSize * 2f, base.Y, 0f), new Vector3(this.xI, this.yI, 0f), ref this.raycastHit, this.projectileSize * 3f, this.friendlyBarrierLayer)) || (!this.horizontalProjectile && Physics.Raycast(new Vector3(base.X, base.Y, 0f), new Vector3(this.xI, this.yI, 0f), ref this.raycastHit, this.projectileSize + this.startProjectileSpeed * this.t, this.friendlyBarrierLayer));
-                if (flag5)
-                {
-                    this.playerNum = 5;
-                    this.firedBy = null;
-                    this.ReflectProjectile(this.raycastHit);
-                }
-                else
-                {
-                    this.TryHitUnitsAtSpawn();
-                }
+                this.TryHitUnitsAtSpawn();
             }
+
             this.CheckSpawnPointFragile();
         }
 
         public void Setup()
         {
-            base.enabled = true;
+            this.enabled = true;
         }
-        
     }
 }
+   
