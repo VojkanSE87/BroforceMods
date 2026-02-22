@@ -1,0 +1,11 @@
+{
+  "name": "Jack_Broton",
+  "author": "Vojkan",
+  "version_number": "1.0.3",
+  "website_url": "https://github.com/VojkanSE87/BroforceMods",
+  "description": "Jack Broton Joins the Battle!",
+  "dependencies": [
+    "UMM-UMM-1.1.0",
+    "BroMaker-BroMaker-2.6.2"
+  ]
+}

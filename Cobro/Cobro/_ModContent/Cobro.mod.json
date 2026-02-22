@@ -1,0 +1,12 @@
+{
+  "Version": "1.0.4",
+  "BroMakerVersion": "2.6.2",
+  "Name": "Cobro",
+  "Author": "Vojkan",
+  "CustomBros": [
+    "Cobro.json"
+  ],
+  "Assemblies": [
+    "Cobro.dll"
+  ]
+}

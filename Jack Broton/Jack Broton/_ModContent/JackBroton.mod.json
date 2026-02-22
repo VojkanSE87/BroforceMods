@@ -1,0 +1,12 @@
+{
+  "Version": "1.0.3",
+  "BroMakerVersion": "2.6.2",
+  "Name": "Jack Broton",
+  "Author": "Vojkan",
+  "CustomBros": [
+    "JackBroton.json"
+  ],
+  "Assemblies": [
+    "Jack Broton.dll"
+  ]
+}
